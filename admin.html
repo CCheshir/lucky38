@@ -132,6 +132,15 @@ canvas#previewCanvas{border-radius:50%;background:#080604;box-shadow:0 0 0 6px #
 .struck-bar{display:flex;align-items:center;gap:.6rem;font-size:.7rem;color:#e07a6a;margin-top:.3rem;padding:.25rem .3rem;border-top:1px dashed rgba(192,57,43,.3)}
 .struck-bar button,.mini-btn{font-family:'Share Tech Mono',monospace;font-size:.68rem;padding:.15rem .5rem;background:rgba(212,168,67,.08);border:1px solid var(--gold-d);color:var(--gold);cursor:pointer}
 .struck-bar button:hover,.mini-btn:hover{background:rgba(212,168,67,.22)}
+#draftsList{max-height:660px;overflow-y:auto;padding-right:.2rem}
+.draft{background:var(--bg3);border:1px solid var(--border2);padding:.45rem .55rem;margin-bottom:.35rem}
+.draft-main{display:grid;grid-template-columns:1fr auto auto auto;gap:.4rem;align-items:center}
+.draft-meta{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin-top:.35rem;font-size:.68rem;color:var(--dim)}
+.draft-meta input,.draft-meta select{background:rgba(212,168,67,.06);border:1px solid var(--border2);color:var(--gold-l);font-family:'Share Tech Mono',monospace;font-size:.72rem;padding:.15rem .3rem}
+.draft .pe-detail{min-height:38px;margin-top:.35rem;font-size:.72rem}
+.draft-send{font-family:'Share Tech Mono',monospace;font-size:.68rem;padding:.2rem .55rem;background:rgba(39,174,96,.1);border:1px solid var(--green);color:var(--green);cursor:pointer;white-space:nowrap}
+.draft-send:hover{background:rgba(39,174,96,.25)}
+#draftTabs .mini-btn.on{background:rgba(212,168,67,.3);color:var(--gold-l)}
 .dirty{font-size:.7rem;color:#e0a040;letter-spacing:.05em;text-transform:none;font-family:'Share Tech Mono',monospace}
 
 /* ── TOAST ── */
@@ -207,7 +216,7 @@ function setState(s) {
 async function refreshFromSupabase() {
   const keys = ['fnv_state','fnv_contracts','fnv_weekly','fnv_weekly_queue',
                  'fnv_coins','fnv_guaranteed','fnv_prizes','fnv_weekly_bonus_enabled',
-                 'fnv_pending','fnv_hidden','fnv_struck'];
+                 'fnv_pending','fnv_hidden','fnv_struck','fnv_notes','fnv_drafts'];
   for (const k of keys) {
     try {
       const v = await sbGet(k);
@@ -245,7 +254,7 @@ async function refreshFromSupabase() {
 
   <nav class="anav">
     <a href="#sec-stats">📊 Игрок</a><a href="#sec-prizes">🎰 Призы</a><a href="#sec-owed">📌 Долги</a>
-    <a href="#sec-hidden">💀 Тайные</a><a href="#sec-history">📜 История</a><a href="#sec-contracts">📋 Контракты</a>
+    <a href="#sec-hidden">💀 Тайные</a><a href="#sec-notes">🗒️ Заметки</a><a href="#sec-history">📜 История</a><a href="#sec-contracts">📋 Контракты</a>
     <a href="#sec-cards">🃏 Карточки</a><a href="#sec-coins">💰 Монеты</a><a href="#sec-guaranteed">🎯 Подкрутка</a>
   </nav>
 
@@ -343,6 +352,29 @@ async function refreshFromSupabase() {
           <b>✂</b> — вычёркивается после выпадения. Когда все тайные вычеркнуты, сектор «Тайное наказание» сам пропадает с колеса.</div>
         <div id="hiddenEditor"></div>
         <div id="hiddenSum" style="font-size:.72rem;color:var(--dim);margin-top:.4rem"></div>
+      </div>
+
+      <!-- NOTES & DRAFTS -->
+      <div class="card" id="sec-notes">
+        <div class="card-title">🗒️ Заметки и черновики <span class="dirty" id="notesSaved"></span></div>
+        <div style="font-size:.7rem;color:var(--dim);letter-spacing:.08em;margin-bottom:.3rem">ЗАМЕТКИ (сохраняются сами)</div>
+        <textarea id="notesText" class="pe-detail" style="min-height:110px" placeholder="Идеи, договорённости, кто кому что должен…"></textarea>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;margin:1rem 0 .5rem">
+          <div style="font-size:.7rem;color:var(--dim);letter-spacing:.08em">СПИСОК «НА ПОТОМ» — готовые пункты, которые можно отправить на колесо, в тайные или в контракты</div>
+          <div style="display:flex;gap:.3rem" id="draftTabs">
+            <button class="mini-btn" data-f="all">Все</button><button class="mini-btn" data-f="reward">🎁</button><button class="mini-btn" data-f="penalty">⚠️</button><button class="mini-btn" data-f="hidden">💀</button><button class="mini-btn" data-f="contract">📋</button>
+          </div>
+        </div>
+        <div id="draftsList"></div>
+        <div style="display:grid;grid-template-columns:120px 1fr auto;gap:.4rem;margin-top:.6rem;align-items:center">
+          <select id="newDraftKind" class="pe-type">
+            <option value="reward">🎁 Награда</option><option value="penalty">⚠️ Наказание</option><option value="bonus">🎟️ Бонус</option><option value="special">☣️ Особое</option>
+            <option value="hidden">💀 Тайное</option><option value="contract">📋 Контракт</option>
+          </select>
+          <input id="newDraftText" class="pe-name" placeholder="Название нового пункта…" style="border:1px solid var(--border2)">
+          <button class="btn btn-g" onclick="addDraft()" style="padding:.35rem .8rem;font-size:.75rem">+ В список</button>
+        </div>
       </div>
 
       <!-- HISTORY -->
@@ -609,6 +641,7 @@ async function init(){
   try { loadWeeklyBonusSetting(); } catch(e) {}
   try { renderOwed(); } catch(e) { console.error('renderOwed:', e); }
   try { hiddenList = loadHidden(); renderHiddenEditor(); } catch(e) { console.error('renderHidden:', e); }
+  try { await initNotes(); } catch(e) { console.error('notes:', e); }
   // Auto-refresh every 8 seconds — skip if user is typing
   setInterval(async () => {
     const active = document.activeElement;
@@ -626,6 +659,7 @@ async function init(){
       try { renderGuaranteedAdmin(); } catch(e) {}
       try { renderOwed(); } catch(e) {}
       try { renderHistory(); } catch(e) {}
+      try { syncNotesFromStorage(); } catch(e) {}
       try {
         const st = localStorage.getItem(STRUCK_KEY);
         if (st !== window._lastStruckJSON) { window._lastStruckJSON = st; renderPrizeEditor(); renderHiddenEditor(); drawPreview(); renderGuaranteedAdmin(); }
@@ -1565,6 +1599,316 @@ function saveHidden(){
   hiddenList=clean; localStorage.setItem(HIDDEN_KEY,JSON.stringify(clean)); sbSet(HIDDEN_KEY,clean);
   clearDirty('hidden');
   renderHiddenEditor(); toast('✅ Тайные наказания сохранены');
+}
+
+// ════════════════════════
+//  NOTES & DRAFTS (fnv_notes, fnv_drafts)
+// ════════════════════════
+const DRAFT_SEED = [
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Вето",
+  "detail": "Мотя выбирает любое наказание на колесе — и оно вычёркивается (админ вычёркивает по его просьбе).",
+  "id": "d1",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Двойная монета",
+  "detail": "+2 Яриккоина или +2 Андрейкоина — на выбор Моти.",
+  "id": "d2",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Возврат",
+  "detail": "Одна уже выпавшая награда возвращается на колесо — какую, выбирает Мотя.",
+  "id": "d3",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Ставка",
+  "detail": "Мотя может поставить 3 билета: если следующая крутка — награда, получает 6 обратно. Если нет — ставка сгорает.",
+  "id": "d4",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Золотой билет",
+  "detail": "Следующий выполненный контракт приносит двойную награду в билетах.",
+  "id": "d5",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Монетный дождь",
+  "detail": "+1 Яриккоин и +1 Андрейкоин.",
+  "id": "d6",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Ящик с лутом",
+  "detail": "Коробка с мелочами до оговорённой суммы, собранная друзьями.",
+  "id": "d7",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Кастомная монета",
+  "detail": "Настоящий Яриккоин или Андрейкоин, напечатанный на 3D-принтере, — можно подержать в руках.",
+  "id": "d8",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "reward",
+  "text": "Игра на наш выбор",
+  "detail": "Друзья дарят Моте игру — какую, решают они (в разумных пределах бюджета).",
+  "id": "d9",
+  "color": "#122850",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Защита диплома",
+  "detail": "5-минутная голосовая защита выдуманной дипломной работы на тему, которую выберет группа. С вопросами комиссии.",
+  "id": "d10",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Дегустатор",
+  "detail": "Попробовать странное сочетание еды на выбор группы. Фото или видео — в чат.",
+  "id": "d11",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Двойной удар",
+  "detail": "Крутишь колесо ещё раз. Если выпадет наказание — выполняешь его дважды.",
+  "id": "d12",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Дебаты",
+  "detail": "5 минут защищать заведомо проигрышную позицию в споре. Тему выбирает группа.",
+  "id": "d13",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Новости Пустоши",
+  "detail": "Записать голосовой выпуск новостей «Радио Нью-Вегас» о событиях недели (1–2 минуты).",
+  "id": "d14",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Бэклог-боль",
+  "detail": "Два часа играть в игру, которую Мотя забросил. Скриншот в начале и в конце.",
+  "id": "d15",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Ранний подъём",
+  "detail": "В выходной прислать фото рассвета в 6 утра.",
+  "id": "d16",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "prize",
+  "type": "penalty",
+  "text": "Налог Хауса",
+  "detail": "Следующий выигрыш билетов уменьшается вдвое.",
+  "id": "d17",
+  "color": "#3e1010",
+  "pct": 5
+ },
+ {
+  "kind": "contract",
+  "text": "Отзыв по заказу",
+  "detail": "Написать отзыв в Стиме длиной 500+ символов на игру, которую посоветует группа.",
+  "tickets": 3,
+  "id": "d18"
+ },
+ {
+  "kind": "contract",
+  "text": "Вызов Андрею",
+  "detail": "Обыграть Андрея в любую игру — на его выбор.",
+  "tickets": 6,
+  "id": "d19"
+ },
+ {
+  "kind": "contract",
+  "text": "Трейлер",
+  "detail": "Снять 30-секундный трейлер вашей компании.",
+  "tickets": 7,
+  "id": "d20"
+ },
+ {
+  "kind": "contract",
+  "text": "Радио Нью-Вегас",
+  "detail": "Собрать плейлист «Радио Нью-Вегас» из 15 треков для посиделки.",
+  "tickets": 3,
+  "id": "d21"
+ },
+ {
+  "kind": "contract",
+  "text": "Соавтор колеса",
+  "detail": "Придумать 3 новых пункта для колеса. Засчитывается, если группа одобрит.",
+  "tickets": 4,
+  "id": "d22"
+ }
+];
+let drafts = [], draftFilter = 'all', _notesTimer = null;
+const KIND_LABEL = {reward:'🎁 Награда',penalty:'⚠️ Наказание',bonus:'🎟️ Бонус',special:'☣️ Особое',skull:'💀 Тайное (сектор)',hidden:'💀 Тайное',contract:'📋 Контракт'};
+function draftCat(d){ return d.kind==='contract' ? 'contract' : d.kind==='hidden' ? 'hidden' : (d.type||'reward'); }
+
+async function initNotes(){
+  const ta=document.getElementById('notesText');
+  let n=null; try{ n=JSON.parse(localStorage.getItem('fnv_notes')); }catch(e){}
+  ta.value = (n && typeof n.text==='string') ? n.text : '';
+  ta.dataset.synced = ta.value;
+  ta.addEventListener('input',()=>{
+    document.getElementById('notesSaved').textContent='● сохраняю…';
+    clearTimeout(_notesTimer);
+    _notesTimer=setTimeout(async()=>{
+      const v={text:ta.value, updated:new Date().toLocaleString('ru')};
+      localStorage.setItem('fnv_notes',JSON.stringify(v)); ta.dataset.synced=ta.value;
+      await sbSet('fnv_notes',v);
+      document.getElementById('notesSaved').textContent='сохранено ✓';
+      setTimeout(()=>{ if(document.getElementById('notesSaved').textContent==='сохранено ✓') document.getElementById('notesSaved').textContent=''; },2000);
+    },700);
+  });
+  // черновики: при первом запуске — заполняем списком отмеченных идей
+  let dv=null; try{ dv=JSON.parse(localStorage.getItem('fnv_drafts')); }catch(e){}
+  if(!dv || !Array.isArray(dv.items)){
+    const remote=await sbGet('fnv_drafts');
+    if(remote && Array.isArray(remote.items)) dv=remote;
+    else { dv={items:JSON.parse(JSON.stringify(DRAFT_SEED)), seeded:true}; await sbSet('fnv_drafts',dv); }
+    localStorage.setItem('fnv_drafts',JSON.stringify(dv));
+  }
+  drafts=dv.items;
+  document.querySelectorAll('#draftTabs .mini-btn').forEach(b=>b.onclick=()=>{ draftFilter=b.dataset.f; renderDrafts(); });
+  renderDrafts();
+}
+function syncNotesFromStorage(){
+  const ta=document.getElementById('notesText');
+  if(document.activeElement!==ta && ta.value===ta.dataset.synced){
+    let n=null; try{ n=JSON.parse(localStorage.getItem('fnv_notes')); }catch(e){}
+    if(n && typeof n.text==='string' && n.text!==ta.value){ ta.value=n.text; ta.dataset.synced=n.text; }
+  }
+  let dv=null; try{ dv=JSON.parse(localStorage.getItem('fnv_drafts')); }catch(e){}
+  if(dv && Array.isArray(dv.items) && JSON.stringify(dv.items)!==JSON.stringify(drafts)){ drafts=dv.items; renderDrafts(); }
+}
+function saveDrafts(){
+  const dv={items:drafts, seeded:true};
+  localStorage.setItem('fnv_drafts',JSON.stringify(dv)); sbSet('fnv_drafts',dv);
+}
+function renderDrafts(){
+  const el=document.getElementById('draftsList'); if(!el) return;
+  document.querySelectorAll('#draftTabs .mini-btn').forEach(b=>b.classList.toggle('on',b.dataset.f===draftFilter));
+  const list=drafts.filter(d=>draftFilter==='all'||draftCat(d)===draftFilter);
+  el.innerHTML='';
+  if(!list.length){ el.innerHTML='<div class="hist-empty" style="padding:1rem">Пусто</div>'; return; }
+  list.forEach(d=>{
+    const row=document.createElement('div'); row.className='draft';
+    const cat=draftCat(d);
+    const sendLabel = d.kind==='contract' ? '→ В контракты' : d.kind==='hidden' ? '→ В тайные' : '→ На колесо';
+    row.innerHTML=`<div class="draft-main">
+        <input class="pe-name" value="${esc(d.text||'')}" data-f="text">
+        <span class="badge badge-${cat==='contract'?'bonus':cat==='hidden'?'skull':cat}">${KIND_LABEL[cat]||cat}</span>
+        <button class="draft-send">${sendLabel}</button>
+        <button class="pe-del" title="Удалить">×</button>
+      </div>
+      <textarea class="pe-detail" data-f="detail" placeholder="Описание / условия">${(d.detail||'').replace(/</g,'&lt;')}</textarea>
+      <div class="draft-meta"></div>`;
+    const meta=row.querySelector('.draft-meta');
+    if(d.kind==='prize'){
+      meta.innerHTML=`Тип <select data-f="type">${['reward','penalty','bonus','special'].map(t=>`<option value="${t}"${d.type===t?' selected':''}>${KIND_LABEL[t]}</option>`).join('')}</select>
+        Шанс % <input type="number" min="0" step="0.5" style="width:55px" value="${d.pct??5}" data-f="pct">
+        🎟️ ± <input type="number" step="1" style="width:50px" value="${d.tickets??''}" data-f="tickets" placeholder="0">
+        Цвет <input type="color" value="${d.color||'#122850'}" data-f="color" style="width:30px;height:20px;padding:0">`;
+    } else if(d.kind==='contract'){
+      meta.innerHTML=`Награда 🎟️ <input type="number" min="1" style="width:55px" value="${d.tickets??3}" data-f="tickets">`;
+    } else {
+      meta.innerHTML=`Вес <input type="number" min="0" style="width:55px" value="${d.pct??10}" data-f="pct">`;
+    }
+    row.querySelectorAll('[data-f]').forEach(inp=>inp.onchange=()=>{
+      const f=inp.dataset.f; let v=inp.value;
+      if(['pct','tickets'].includes(f)) v = v==='' ? undefined : parseFloat(v);
+      d[f]=v; saveDrafts(); if(f==='type') renderDrafts();
+    });
+    row.querySelector('.draft-send').onclick=()=>sendDraft(d.id);
+    row.querySelector('.pe-del').onclick=()=>{ if(!confirm(`Удалить «${d.text}» из списка?`)) return; drafts=drafts.filter(x=>x.id!==d.id); saveDrafts(); renderDrafts(); };
+    el.appendChild(row);
+  });
+}
+function addDraft(){
+  const kind=document.getElementById('newDraftKind').value;
+  const text=document.getElementById('newDraftText').value.trim();
+  if(!text){ toast('⚠ Введи название'); return; }
+  const d={id:'d'+Date.now(), text, detail:''};
+  if(kind==='contract'){ d.kind='contract'; d.tickets=3; }
+  else if(kind==='hidden'){ d.kind='hidden'; d.pct=10; }
+  else { d.kind='prize'; d.type=kind; d.pct=5; d.color = kind==='penalty'?'#3e1010':kind==='bonus'?'#0a2e0a':kind==='special'?'#220a30':'#122850'; }
+  drafts.unshift(d); saveDrafts();
+  document.getElementById('newDraftText').value='';
+  renderDrafts(); toast('🗒️ Добавлено в список «на потом»');
+}
+async function sendDraft(id){
+  const d=drafts.find(x=>x.id===id); if(!d) return;
+  if(d.kind==='prize'){
+    const p={text:d.text, type:d.type||'reward', color:d.color||'#122850', pct:parseFloat(d.pct)||0, detail:d.detail||''};
+    if(d.tickets!==undefined && d.tickets!==null && d.tickets!=='' && !isNaN(d.tickets)) p.tickets=parseInt(d.tickets);
+    prizes.push(p); renderPrizeEditor(); schedulePreview(); markDirty('prizes');
+    toast('✅ Добавлено в призы — проверь проценты и нажми «💾 Сохранить»');
+    document.getElementById('sec-prizes').scrollIntoView({behavior:'smooth'});
+  } else if(d.kind==='hidden'){
+    hiddenList.push({text:d.text, pct:parseFloat(d.pct)||10, oneTime:true}); renderHiddenEditor(); markDirty('hidden');
+    toast('✅ Добавлено в тайные — нажми «💾 Сохранить» в тайных');
+    document.getElementById('sec-hidden').scrollIntoView({behavior:'smooth'});
+  } else {
+    const contracts=await freshContracts();
+    contracts.push({id:'c'+Date.now(), title:d.text, desc:d.detail||'', tickets:parseInt(d.tickets)||3, status:'open'});
+    saveContractsToStorage(contracts); renderContractsAdmin();
+    toast('✅ Контракт опубликован на доске');
+  }
+  drafts=drafts.filter(x=>x.id!==id); saveDrafts(); renderDrafts();
 }
 
 // ════════════════════════
