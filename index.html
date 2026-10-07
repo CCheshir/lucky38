@@ -82,6 +82,46 @@ canvas#wheelCanvas{width:100%;height:100%;display:block;border-radius:50%;backgr
 .prize-list li .num{font-family:'Share Tech Mono',monospace;color:var(--gold-d);min-width:1.3rem;font-size:.75rem;padding-top:.05rem}
 .prize-list li.active{background:rgba(212,168,67,.12);border-left-color:var(--gold);color:var(--gold-l);font-weight:bold;transform:translateX(4px);box-shadow:0 0 12px rgba(212,168,67,.08)}
 
+/* ── prize panel (v5) ── */
+.prize-panel{background:rgba(8,6,3,.72);border:1px solid var(--border);padding:1rem .9rem .8rem;box-shadow:0 10px 40px rgba(0,0,0,.5);backdrop-filter:blur(2px)}
+.prize-panel h2{margin-bottom:.2rem}
+.prize-counter{text-align:center;font-family:'Share Tech Mono',monospace;font-size:.68rem;color:var(--dim);letter-spacing:.12em;margin-bottom:.7rem}
+.prize-list{max-height:min(64vh,560px);overflow-y:auto;padding-right:.2rem}
+.prize-list li{padding:.32rem .5rem;margin-bottom:.18rem}
+.prize-list li{flex-wrap:wrap;align-items:center;font-size:.82rem;color:var(--text);background:rgba(212,168,67,.035);cursor:default}
+.prize-list li .pl-dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px;box-shadow:0 0 0 1px rgba(212,168,67,.45)}
+.prize-list li .pl-text{flex:1;min-width:0;line-height:1.35}
+.prize-list li .pl-tag{font-size:.75rem;color:var(--gold-d);min-width:1rem;text-align:right}
+.prize-list li.gone{opacity:.42;background:transparent}
+.prize-list li.gone .pl-text{text-decoration:line-through;text-decoration-color:rgba(192,57,43,.8);text-decoration-thickness:2px}
+.prize-list li.gone.active{opacity:1}
+.prize-list li.has-detail{cursor:pointer}
+.prize-list li.has-detail:hover{opacity:.75}
+.prize-list li .prize-detail-panel{flex-basis:100%;text-decoration:none}
+.prize-list li.pl-sep{background:none;border:none;justify-content:center;color:var(--dim);font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:.15em;margin:.6rem 0 .3rem}
+.prize-legend{margin-top:.6rem;padding-top:.5rem;border-top:1px solid var(--border2,rgba(212,168,67,.08));font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--dim);text-align:center;letter-spacing:.05em}
+.spin-status{margin-top:.6rem;font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--dim);letter-spacing:.06em}
+.spin-status.warn{color:#c9783a}
+
+/* ── result card ── */
+#resultOverlay{display:none;position:fixed;inset:0;z-index:650;background:rgba(0,0,0,.78);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem}
+#resultOverlay.show{display:flex;animation:fadeIn .3s}
+#resultCard{position:relative;width:min(420px,92vw);padding:2rem 1.6rem 1.5rem;text-align:center;
+  background:linear-gradient(160deg,#f5e9c8 0%,#ede0aa 60%,#d9c98a 100%);border:1px solid #b8960a;color:#2a1a04;
+  box-shadow:0 0 0 6px rgba(0,0,0,.35),0 0 80px rgba(212,168,67,.35);transform:rotate(-1.2deg);animation:cardIn .45s cubic-bezier(.2,1.4,.4,1)}
+@keyframes cardIn{from{opacity:0;transform:rotate(-6deg) scale(.7)}to{opacity:1;transform:rotate(-1.2deg) scale(1)}}
+.rc-pin{position:absolute;top:-11px;left:50%;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#ff6060,#aa0000);box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.rc-type{display:inline-block;font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;padding:.2rem .7rem;border:1px solid rgba(100,60,0,.35);color:#6a4408;margin-bottom:.6rem}
+.rc-penalty .rc-type,.rc-skull .rc-type{color:#8b1a1a;border-color:rgba(139,26,26,.4)}
+.rc-bonus .rc-type{color:#1e6b34;border-color:rgba(30,107,52,.4)}
+.rc-special .rc-type{color:#5b2380;border-color:rgba(91,35,128,.4)}
+.rc-head{font-family:'Share Tech Mono',monospace;font-size:.75rem;letter-spacing:.35em;color:#7a5a20}
+.rc-title{font-family:'Oswald',sans-serif;font-size:clamp(1.5rem,6vw,2.1rem);font-weight:700;line-height:1.15;margin:.3rem 0 .8rem;color:#1a0e00}
+.rc-detail{font-size:.95rem;line-height:1.55;color:#3a2408;margin-bottom:.9rem;text-align:left;padding:.7rem .8rem;background:rgba(100,60,0,.06);border-left:3px solid rgba(139,26,26,.45)}
+.rc-note{font-family:'Share Tech Mono',monospace;font-size:.78rem;color:#8b1a1a;margin-bottom:1rem}
+.rc-btn{font-family:'Oswald',sans-serif;font-size:1rem;letter-spacing:.2em;text-transform:uppercase;padding:.65rem 2.4rem;background:linear-gradient(180deg,#8b1a1a,#5a1010);border:1px solid #c0392b;color:#f5d07a;cursor:pointer}
+.rc-btn:hover{background:linear-gradient(180deg,#a02020,#701515)}
+
 /* controls */
 .controls{text-align:center;margin:1.8rem 0 .8rem}
 .btn-spin{font-family:'Oswald',sans-serif;font-size:1.35rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;padding:.9rem 2.8rem;margin:.4rem;border:1px solid var(--gold);background:linear-gradient(180deg,#c0392b,#7a1515);color:var(--gold-l);cursor:pointer;transition:all .2s;box-shadow:0 6px 20px rgba(0,0,0,.6)}
@@ -105,7 +145,22 @@ canvas#wheelCanvas{width:100%;height:100%;display:block;border-radius:50%;backgr
 .skull-close{font-family:'Oswald',sans-serif;padding:.75rem 2rem;background:linear-gradient(180deg,#8b1a1a,#5a1010);border:1px solid var(--red);color:var(--text);font-size:.95rem;letter-spacing:.15em;text-transform:uppercase;cursor:pointer}
 .skull-close:hover{background:linear-gradient(180deg,#a02020,#701515)}
 
-@media(max-width:768px){.casino-row{flex-direction:column;align-items:center}.lever-col{order:-1;width:80px}.prize-panel{max-width:100%;width:min(340px,95vw)}}
+@media(max-width:768px){
+  .game-layout{display:flex;flex-direction:column;align-items:center;padding-bottom:5rem}
+  .casino-row{display:contents}
+  .lever-col{display:none}
+  .wheel-col{order:1;width:min(88vw,420px);flex:none;margin:1rem 0 .5rem}
+  .controls{order:2;margin:1.6rem 0 .4rem}
+  #result{order:3}
+  .prize-panel{order:4;max-width:100%;width:min(380px,94vw)}
+  .top-bar{padding:.6rem .8rem;gap:.5rem}
+  .top-title{font-size:.85rem;letter-spacing:.12em}
+  .player-info{font-size:.7rem}
+  .game-sub{margin-bottom:.4rem;font-size:.75rem}
+  #weeklyCardWrap{top:auto!important;bottom:.8rem;left:auto!important;right:.8rem;width:52px!important}
+  .coins-hud{position:static!important;flex-direction:row!important;justify-content:center;margin:.6rem auto 0}
+  .back-btn{bottom:.8rem!important;left:.8rem!important;padding:.4rem .8rem!important;font-size:.72rem!important}
+}
 
 /* Prize detail expand */
 .prize-expand-btn{
@@ -692,18 +747,20 @@ async function loadCardsRemote() {
       <!-- PRIZES -->
       <div class="prize-panel">
         <h2>⚙ Призы</h2>
+        <div class="prize-counter" id="prizeCounter"></div>
         <ul class="prize-list" id="prizeList"></ul>
+        <div class="prize-legend">Выпавший пункт вычёркивается · ∞ — может выпасть снова</div>
       </div>
     </div>
 
     <div class="controls">
       <button class="btn-spin" id="spinBtn" onclick="startSpin()">⚡ КРУТИТЬ!</button>
-      <button class="btn-reset" onclick="resetWheel()">↺ Сбросить</button>
+      <div class="spin-status" id="spinStatus"></div>
     </div>
     <div id="result"></div>
   </div>
 
-<button onclick="goBackToLobbyFromGame()" style="
+<button class="back-btn" onclick="goBackToLobbyFromGame()" style="
   position:fixed;bottom:1.5rem;left:1.5rem;z-index:800;
   font-family:'Oswald',sans-serif;font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;
   padding:.55rem 1.2rem;
@@ -711,6 +768,19 @@ async function loadCardsRemote() {
   cursor:pointer;transition:all .25s;
 " onmouseover="this.style.color='#d4a843';this.style.borderColor='rgba(212,168,67,0.8)'"
    onmouseout="this.style.color='#7a6840';this.style.borderColor='rgba(212,168,67,0.3)'">← Назад</button>
+</div>
+
+<!-- RESULT CARD -->
+<div id="resultOverlay" onclick="if(event.target===this)closeResultCard()">
+  <div id="resultCard">
+    <div class="rc-pin"></div>
+    <div class="rc-type" id="rcType"></div>
+    <div class="rc-head">ВЫПАЛО</div>
+    <div class="rc-title" id="rcTitle"></div>
+    <div class="rc-detail" id="rcDetail"></div>
+    <div class="rc-note" id="rcNote"></div>
+    <button class="rc-btn" onclick="closeResultCard()">Забрать</button>
+  </div>
 </div>
 
 <!-- SKULL OVERLAY -->
@@ -752,23 +822,57 @@ const HIDDEN = [
   {"text": "Удостоверение не-фаната Резика (карандашиком) 📄", "pct": 10},
 ];
 
-// Список тайных наказаний: из админки (fnv_hidden), иначе встроенный HIDDEN. Выбор с учётом %.
+// ═══════════ ВЫЧЁРКИВАНИЕ ═══════════
+// fnv_struck — список ключей вычеркнутых пунктов. Ключ приза — его текст,
+// ключ тайного наказания — 'h:' + текст. Если в админке переименовать пункт — он вернётся.
+const STRUCK_KEY = 'fnv_struck';
+function getStruck(){
+  try{ const s=JSON.parse(localStorage.getItem(STRUCK_KEY)); return Array.isArray(s)?s:[]; }catch(e){ return []; }
+}
+function prizeKey(p){ return (p.text||'').trim(); }
+function hiddenKey(h){ return 'h:'+((h.text||'').trim()); }
+// Вычёркивается ли пункт: явный флажок из админки, иначе — по умолчанию
+// награды/наказания/особые да, бонусы билетами и «тайное наказание» нет.
+function isOneTime(p){
+  if(typeof p.oneTime==='boolean') return p.oneTime;
+  return ['reward','penalty','special'].includes(p.type) && !prizeTicketDelta(p);
+}
+function isHiddenOneTime(h){ return typeof h.oneTime==='boolean' ? h.oneTime : true; }
+function isStruck(p){ return getStruck().includes(prizeKey(p)); }
+async function strikeKeys(keys){
+  if(!keys.length) return;
+  const local=getStruck(); keys.forEach(k=>{ if(!local.includes(k)) local.push(k); });
+  localStorage.setItem(STRUCK_KEY,JSON.stringify(local));
+  let remote=await sbGet(STRUCK_KEY); if(!Array.isArray(remote)) remote=[];
+  keys.forEach(k=>{ if(!remote.includes(k)) remote.push(k); });
+  localStorage.setItem(STRUCK_KEY,JSON.stringify(remote));
+  await sbSet(STRUCK_KEY,remote);
+}
+
+// ═══════════ ТАЙНЫЕ НАКАЗАНИЯ ═══════════
+// Список: из админки (fnv_hidden), иначе встроенный HIDDEN. Выбор с учётом веса, без вычеркнутых.
 function getHiddenList(){
   try{ const h=JSON.parse(localStorage.getItem('fnv_hidden')); if(h&&h.length) return h; }catch(e){}
   return HIDDEN;
 }
+function availableHidden(){
+  const struck=getStruck();
+  return getHiddenList().map(h=>typeof h==='string'?{text:h,pct:1}:h)
+    .filter(h=>(h.text||'').trim() && !struck.includes(hiddenKey(h)));
+}
 function pickHidden(){
-  const list=getHiddenList().map(h=>typeof h==='string'?{text:h,pct:1}:h);
+  const list=availableHidden();
+  if(!list.length) return null;
   const w=list.map(h=>Math.max(0,parseFloat(h.pct)||0));
   const total=w.reduce((a,b)=>a+b,0);
-  if(total<=0) return list[Math.floor(Math.random()*list.length)].text;
+  if(total<=0) return list[Math.floor(Math.random()*list.length)];
   let r=Math.random()*total;
-  for(let i=0;i<list.length;i++){ r-=w[i]; if(r<0) return list[i].text; }
-  return list[list.length-1].text;
+  for(let i=0;i<list.length;i++){ r-=w[i]; if(r<0) return list[i]; }
+  return list[list.length-1];
 }
 
-// Невыполненные выигрыши (fnv_pending): всё, что выпало и что нужно «отдать» —
-// награды, наказания, особые. Одинаковые складываются в счётчик count.
+// Невыполненные выигрыши (fnv_pending): всё, что выпало и что нужно «отдать».
+// Одинаковые складываются в счётчик count.
 async function addPending(text,type){
   let list=await sbGet('fnv_pending');
   if(!Array.isArray(list)) list=[];
@@ -782,35 +886,26 @@ async function addPending(text,type){
 // ═══════════ STATE ═══════════
 let state = { tickets:5, spinsToday:0, lastDate:'', history:[], playerName:'' };
 function loadState(){
-  // Sync load from localStorage (instant)
   try{ const s=JSON.parse(localStorage.getItem(SK)); if(s) state={...state,...s}; }catch(e){}
 }
-async function loadStateAsync(){
-  // Async load from Supabase (authoritative)
-  await loadStateRemote();
-}
 function saveState(){
-  const s = JSON.stringify(state);
-  localStorage.setItem(SK, s);
+  try{ localStorage.setItem(SK, JSON.stringify(state)); }catch(e){}
   saveStateRemote(state); // async, fire-and-forget
 }
 function today(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function checkDay(){ if(state.lastDate!==today()){ state.spinsToday=0; state.lastDate=today(); saveState(); } }
 function getAdminPrizes(){
-  // Read from fnv_prizes (written by admin panel)
   try{
     const s=JSON.parse(localStorage.getItem('fnv_prizes'));
     if(s&&s.length&&typeof s[0]==='object'&&'pct' in s[0]) return s;
   }catch(e){}
-  // Fallback: legacy fnv_weights key
   try{
     const s=JSON.parse(localStorage.getItem(WK));
     if(s&&s.length&&typeof s[0]==='object'&&'pct' in s[0]) return s;
   }catch(e){}
   return null;
 }
-// Сколько билетов даёт/забирает приз. Берётся из поля tickets (задаётся в админке);
-// для старых призов без поля — пытаемся прочитать число из текста ("+ 2 билета", "− 1 билет").
+// Сколько билетов даёт/забирает приз: поле tickets из админки, иначе число из текста.
 function prizeTicketDelta(p){
   if(p.tickets!==undefined && p.tickets!==null && p.tickets!=='') return parseInt(p.tickets)||0;
   const m=(p.text||'').match(/([+\-−–])\s*(\d+)\s*билет/i);
@@ -818,10 +913,15 @@ function prizeTicketDelta(p){
   return (m[1]==='+'?1:-1)*parseInt(m[2]);
 }
 function getEffectivePrizes(){ const a=getAdminPrizes(); return a||PRIZES; }
-function getWeights(){
-  const ep=getEffectivePrizes();
-  if(ep.length&&'pct' in ep[0]) return ep.map(p=>parseFloat(p.pct)||0);
-  return ep.map(()=>1);
+function prizeWeight(p){ return ('pct' in p) ? Math.max(0,parseFloat(p.pct)||0) : 1; }
+// Призы, которые сейчас на колесе: без вычеркнутых, без нулевых,
+// и без «тайного наказания», если все тайные наказания уже вычеркнуты.
+function getWheelPrizes(){
+  const struck=getStruck();
+  const hiddenLeft=availableHidden().length>0;
+  return getEffectivePrizes()
+    .map((p,i)=>({...p,_idx:i}))
+    .filter(p=>prizeWeight(p)>0 && !struck.includes(prizeKey(p)) && !(p.type==='skull' && !hiddenLeft));
 }
 loadState();
 
@@ -831,10 +931,9 @@ document.getElementById('loginBtn').addEventListener('click', tryLogin);
 
 function tryLogin(){
   const v = document.getElementById('nameInput').value.trim();
-  if(v.toLowerCase()===ALLOWED){ 
+  if(v.toLowerCase()===ALLOWED){
     state.playerName=v; saveState();
     try{ localStorage.setItem('fnv_logged_in','1'); }catch(e){}
-    // After login → go to lobby
     const ls=document.getElementById('loginScreen');
     ls.style.transition='opacity .6s'; ls.style.opacity='0';
     setTimeout(()=>{ ls.style.display='none'; showLobby(); },600);
@@ -860,46 +959,56 @@ function enterGame(){
   },700);
 }
 
-// Screen flow handled by DOMContentLoaded below
-
 // ═══════════ PRIZE LIST ═══════════
-function buildPrizeList(){
+const TYPE_META = {
+  reward:  { icon:'🎁', label:'Награда'   },
+  bonus:   { icon:'🎟️', label:'Бонус'     },
+  penalty: { icon:'⚠️', label:'Наказание' },
+  skull:   { icon:'💀', label:'Тайна'     },
+  special: { icon:'☣️', label:'Особое'    },
+};
+function cleanText(t){ return (t||'').replace(/[\u{1F300}-\u{1FFFF}☀-➿️]/gu,'').replace(/\s+/g,' ').trim(); }
+
+function buildPrizeList(highlightIdx){
   const el=document.getElementById('prizeList'); el.innerHTML='';
-  getEffectivePrizes().forEach((p,i)=>{
+  const all=getEffectivePrizes();
+  const onWheel=new Set(getWheelPrizes().map(p=>p._idx));
+  const struck=getStruck();
+  const active=[], gone=[];
+  all.forEach((p,i)=>{ if(prizeWeight(p)<=0) return; (struck.includes(prizeKey(p))?gone:active).push(i); });
+
+  const counter=document.getElementById('prizeCounter');
+  if(counter) counter.textContent = gone.length ? `${onWheel.size} на колесе · ${gone.length} выпало` : `${onWheel.size} на колесе`;
+
+  const makeLi=(i,isGone)=>{
+    const p=all[i];
     const li=document.createElement('li');
     li.dataset.index=i;
-    li.style.flexDirection='column';
-    li.style.alignItems='stretch';
-
-    // Main text row
-    const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:flex-start;gap:.4rem;';
-    row.innerHTML=`<span class="num">${i+1}.</span><span>${p.text}</span>`;
-    li.appendChild(row);
-
-    // Expand button (hidden until this prize wins)
-    const detail = p.detail || null;
-    if(detail){
-      const btn=document.createElement('button');
-      btn.className='prize-expand-btn';
-      btn.dataset.idx=i;
-      btn.innerHTML=`<span class="tri">▼</span> подробнее`;
-      btn.onclick=(e)=>{
-        e.stopPropagation();
-        const panel=li.querySelector('.prize-detail-panel');
-        const isOpen=btn.classList.toggle('open');
-        panel.style.display=isOpen?'block':'none';
-      };
-      li.appendChild(btn);
-
+    if(isGone) li.classList.add('gone');
+    else if(!onWheel.has(i)) li.classList.add('gone'); // напр. тайное, когда тайных не осталось
+    if(i===highlightIdx) li.classList.add('active');
+    const meta=TYPE_META[p.type]||TYPE_META.reward;
+    li.innerHTML=`<span class="pl-dot" style="background:${p.color||'#333'}"></span>
+      <span class="pl-text"></span>
+      <span class="pl-tag" title="${meta.label}">${isGone?'✂':(isOneTime(p)?'':'∞')}</span>`;
+    li.querySelector('.pl-text').textContent=cleanText(p.text)||p.text;
+    li.title = isGone ? 'Уже выпало — вычеркнуто' : (isOneTime(p) ? meta.label+' · выпадает один раз' : meta.label+' · может выпасть снова');
+    if(p.detail && isGone){ // описание открывается только у уже выпавших — остальное сюрприз
+      li.classList.add('has-detail');
       const panel=document.createElement('div');
       panel.className='prize-detail-panel';
-      panel.textContent=detail;
+      panel.textContent=p.detail;
       li.appendChild(panel);
+      li.onclick=()=>{ const open=panel.style.display==='block'; panel.style.display=open?'none':'block'; };
     }
-
-    el.appendChild(li);
-  });
+    return li;
+  };
+  active.forEach(i=>el.appendChild(makeLi(i,false)));
+  if(gone.length){
+    const sep=document.createElement('li'); sep.className='pl-sep'; sep.textContent='— уже выпало —';
+    el.appendChild(sep);
+    gone.forEach(i=>el.appendChild(makeLi(i,true)));
+  }
 }
 
 // ═══════════ CANVAS WHEEL ═══════════
@@ -914,53 +1023,38 @@ function initWheel(){
   drawWheel(wheelAngle);
 }
 
+function wheelSegments(list){
+  const total=list.reduce((a,p)=>a+prizeWeight(p),0)||1;
+  let acc=0;
+  return list.map(p=>{ const sweep=prizeWeight(p)/total*Math.PI*2; const s={p,start:acc,sweep}; acc+=sweep; return s; });
+}
+
 function drawWheel(angle){
   const canvas=document.getElementById('wheelCanvas');
   const W=canvas.width, H=canvas.height;
   const ctx=canvas.getContext('2d');
   ctx.clearRect(0,0,W,H);
-  const ep=getEffectivePrizes();
-  const weights=getWeights();
-  const totalW=weights.reduce((a,b)=>a+Math.max(0,b),0)||ep.length;
-
-  // build segments
-  const segs=[];
-  let cur=angle-Math.PI/2;
-  ep.forEach((p,i)=>{
-    const w=Math.max(0,weights[i]);
-    const sweep=(w/totalW)*Math.PI*2;
-    segs.push({prize:p,idx:i,start:cur,end:cur+sweep,sweep});
-    cur+=sweep;
-  });
+  const list=getWheelPrizes();
+  const segs=wheelSegments(list).map(s=>({...s,start:s.start+angle-Math.PI/2,end:s.start+angle-Math.PI/2+s.sweep}));
 
   const cx=W/2, cy=H/2, outerR=W*.466, innerR=W*.108;
 
-  // Background circle
   ctx.beginPath(); ctx.arc(cx,cy,outerR,0,Math.PI*2);
   ctx.fillStyle='#080604'; ctx.fill();
 
   segs.forEach((s,i)=>{
     if(s.sweep<=0.001) return;
-    // Segment fill
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,outerR,s.start,s.end); ctx.closePath();
-    const lightened = i%2===0 ? s.prize.color : lightenHex(s.prize.color,18);
-    ctx.fillStyle=lightened; ctx.fill();
-    // Divider line
+    ctx.fillStyle = i%2===0 ? s.p.color : lightenHex(s.p.color,18);
+    ctx.fill();
     ctx.strokeStyle='rgba(212,168,67,0.5)'; ctx.lineWidth=1.5; ctx.stroke();
 
-    // Radial highlight shimmer
     const mid=s.start+s.sweep/2;
-    const g=ctx.createLinearGradient(
-      cx+Math.cos(s.start)*innerR, cy+Math.sin(s.start)*innerR,
-      cx+Math.cos(mid)*outerR,     cy+Math.sin(mid)*outerR
-    );
-    g.addColorStop(0,'rgba(255,255,255,0.0)');
-    g.addColorStop(0.5,'rgba(255,255,255,0.04)');
-    g.addColorStop(1,'rgba(255,255,255,0.0)');
+    const g=ctx.createLinearGradient(cx+Math.cos(s.start)*innerR, cy+Math.sin(s.start)*innerR, cx+Math.cos(mid)*outerR, cy+Math.sin(mid)*outerR);
+    g.addColorStop(0,'rgba(255,255,255,0.0)'); g.addColorStop(0.5,'rgba(255,255,255,0.04)'); g.addColorStop(1,'rgba(255,255,255,0.0)');
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,outerR,s.start,s.end); ctx.closePath();
     ctx.fillStyle=g; ctx.fill();
 
-    // Text
     if(s.sweep>0.1){
       const textR=(outerR+innerR)/2+outerR*.07;
       ctx.save();
@@ -971,8 +1065,7 @@ function drawWheel(angle){
       ctx.textAlign='center'; ctx.textBaseline='middle';
       ctx.shadowColor='rgba(0,0,0,0.9)'; ctx.shadowBlur=5;
       ctx.fillStyle='rgba(232,213,160,0.95)';
-      const clean=s.prize.text.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim();
-      const words=clean.split(' ');
+      const words=(cleanText(s.p.text)||s.p.text).split(' ');
       const maxCh=Math.max(5, Math.floor(s.sweep*outerR/(fs*0.62)));
       const lines=wrapText(words,maxCh).slice(0,3);
       const lh=fs*1.3;
@@ -981,12 +1074,16 @@ function drawWheel(angle){
     }
   });
 
-  // Outer rim
+  if(!segs.length){
+    ctx.save(); ctx.font=`600 ${W*.04}px Oswald`; ctx.fillStyle='rgba(212,168,67,.6)';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('ВСЁ ВЫПАЛО', cx, cy-innerR*1.8); ctx.restore();
+  }
+
   ctx.beginPath(); ctx.arc(cx,cy,outerR,0,Math.PI*2);
   ctx.strokeStyle='rgba(212,168,67,0.7)'; ctx.lineWidth=3; ctx.stroke();
 
-  // Pin dots
-  const nPins=ep.length*2;
+  const nPins=Math.max(8,segs.length*2);
   for(let i=0;i<nPins;i++){
     const a=angle+(i/nPins)*Math.PI*2;
     const pr=outerR-10;
@@ -996,20 +1093,18 @@ function drawWheel(angle){
     ctx.fillStyle=gp; ctx.fill();
   }
 
-  // Inner hub
   const hub=ctx.createRadialGradient(cx-innerR*.25,cy-innerR*.25,0,cx,cy,innerR);
   hub.addColorStop(0,'#fff8d0'); hub.addColorStop(.3,'#f5d07a'); hub.addColorStop(.7,'#d4a843'); hub.addColorStop(1,'#7a5510');
   ctx.beginPath(); ctx.arc(cx,cy,innerR,0,Math.PI*2);
   ctx.fillStyle=hub; ctx.fill();
   ctx.strokeStyle='#8a6a1a'; ctx.lineWidth=2.5; ctx.stroke();
-  // Hub symbol
   ctx.font=`bold ${innerR*.8}px Special Elite`;
   ctx.fillStyle='#1a1208'; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.shadowBlur=0; ctx.fillText('✦',cx,cy+innerR*.06);
 }
 
 function lightenHex(hex,amt){
-  const n=parseInt(hex.replace('#',''),16);
+  const n=parseInt((hex||'#333333').replace('#',''),16);
   const r=Math.min(255,((n>>16)&0xff)+amt);
   const g=Math.min(255,((n>>8)&0xff)+amt);
   const b=Math.min(255,(n&0xff)+amt);
@@ -1023,24 +1118,13 @@ function wrapText(words,maxCh){
   return lines;
 }
 
-// Which prize is under pointer (top centre)?
-function getPrizeAtTop(){
-  const ep=getEffectivePrizes();
-  const weights=getWeights();
-  const totalW=weights.reduce((a,b)=>a+Math.max(0,b),0)||ep.length;
-  // Segments start at (wheelAngle - π/2) and go clockwise.
-  // Pointer is fixed at canvas angle -π/2.
-  // A point at canvas angle -π/2 sits at segment-local angle:
-  //   local = (-π/2 - (wheelAngle - π/2)) mod 2π  =  (-wheelAngle) mod 2π
+// Какой приз под стрелкой (сверху)? Возвращает объект приза (с _idx) или null.
+function getPrizeAtTop(list){
+  list=list||getWheelPrizes();
   const local=((-wheelAngle)%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
-  let acc=0;
-  for(let i=0;i<ep.length;i++){
-    const w=Math.max(0,weights[i]);
-    const sweep=(w/totalW)*Math.PI*2;
-    if(local>=acc&&local<acc+sweep) return i;
-    acc+=sweep;
-  }
-  return 0;
+  const segs=wheelSegments(list);
+  for(const s of segs){ if(local>=s.start && local<s.start+s.sweep) return s.p; }
+  return segs.length ? segs[segs.length-1].p : null;
 }
 
 // ═══════════ SPIN ═══════════
@@ -1049,64 +1133,123 @@ function startSpin(){
   checkDay();
   if(state.tickets<=0){ flashMsg('Нет билетов!'); return; }
   if(state.spinsToday>=DAY_LIMIT){ flashMsg(`Лимит: ${DAY_LIMIT} крутки в день`); return; }
+  const list=getWheelPrizes();
+  if(!list.length){ flashMsg('Колесо пусто — всё уже выпало'); return; }
+
+  // Подкрутка из админки: индекс приза в общем списке
+  let target=null;
+  const g=getGuaranteed();
+  if(g!==null){
+    target=list.find(p=>p._idx===g)||null;
+    localStorage.removeItem(GUARANTEED_KEY);
+    sbDelete(GUARANTEED_KEY);
+  }
+
   spinning=true; state.tickets--; state.spinsToday++;
   saveState(); updateUI();
   document.getElementById('result').innerHTML='';
   document.querySelectorAll('#prizeList li').forEach(l=>l.classList.remove('active'));
   animateLever();
-  const totalRot=(8+Math.random()*5)*Math.PI*2;
-  const dur=5800, t0=performance.now(), a0=wheelAngle;
+
+  const a0=wheelAngle;
+  let totalRot;
+  if(target){
+    const segs=wheelSegments(list);
+    const s=segs.find(x=>x.p._idx===target._idx);
+    const targetLocal=s.start+s.sweep*(0.3+Math.random()*0.4);
+    const base=-targetLocal, minRot=8*Math.PI*2;
+    const k=Math.ceil((a0+minRot-base)/(Math.PI*2));
+    totalRot=base+k*Math.PI*2-a0;
+  } else {
+    totalRot=(8+Math.random()*5)*Math.PI*2;
+  }
+  const dur=5800, t0=performance.now();
   function ease(t){ return 1-Math.pow(1-t,3.8); }
   function frame(now){
     const t=Math.min((now-t0)/dur,1), e=ease(t);
     wheelAngle=a0+totalRot*e;
     drawWheel(wheelAngle);
     if(t<1){ animId=requestAnimationFrame(frame); }
-    else { wheelAngle=a0+totalRot; drawWheel(wheelAngle); spinning=false; onSpinEnd(); }
+    else { wheelAngle=a0+totalRot; drawWheel(wheelAngle); spinning=false; onSpinEnd(list); }
   }
   animId=requestAnimationFrame(frame);
 }
 
-function onSpinEnd(){
-  const idx=getPrizeAtTop(), prize=getEffectivePrizes()[idx];
+function onSpinEnd(list){
+  const prize=getPrizeAtTop(list);
+  if(!prize) return;
   const dT=prizeTicketDelta(prize);
   if(dT) state.tickets=Math.max(0,state.tickets+dT);
-  if(!dT && prize.type!=='skull' && prize.type!=='bonus') addPending(prize.text, prize.type);
   state.history.unshift({date:new Date().toLocaleString('ru'),prize:prize.text,type:prize.type});
   if(state.history.length>100) state.history.pop();
-  saveState(); updateUI();
-  tgNotify(`🎰 <b>Мотя крутит колесо!</b>\n\n🎯 Результат: <b>${prize.text}</b>\n🎟️ Билетов осталось: ${state.tickets}`);
-  document.querySelectorAll('#prizeList li').forEach(l=>{
-    l.classList.remove('active');
-    // Hide all expand buttons and close all panels
-    const btn=l.querySelector('.prize-expand-btn');
-    const panel=l.querySelector('.prize-detail-panel');
-    if(btn){ btn.style.display='none'; btn.classList.remove('open'); }
-    if(panel){ panel.style.display='none'; }
-  });
-  const li=document.querySelector(`#prizeList li[data-index="${idx}"]`);
-  if(li){
-    li.classList.add('active');
-    li.scrollIntoView({behavior:'smooth',block:'nearest'});
-    // Show expand button if this prize has a detail
-    const btn=li.querySelector('.prize-expand-btn');
-    if(btn) btn.style.display='block';
-  }
+
+  const toStrike=[];
+  if(isOneTime(prize)) toStrike.push(prizeKey(prize));
+
+  let secret=null;
   if(prize.type==='skull'){
-    const secret=pickHidden();
-    document.getElementById('skullText').textContent=secret;
-    state.history[0].prize+=` → ${secret}`; saveState();
-    addPending('💀 '+secret, 'skull');
+    secret=pickHidden();
+    if(secret){
+      state.history[0].prize+=` → ${secret.text}`;
+      if(isHiddenOneTime(secret)) toStrike.push(hiddenKey(secret));
+      addPending('💀 '+secret.text,'skull');
+    }
+  } else if(!dT && prize.type!=='bonus'){
+    addPending(prize.text, prize.type);
+  }
+  saveState(); updateUI();
+  strikeKeys(toStrike);
+  tgNotify(`🎰 <b>Мотя крутит колесо!</b>\n\n🎯 Результат: <b>${prize.text}</b>${secret?' → '+secret.text:''}\n🎟️ Билетов осталось: ${state.tickets}`);
+
+  // подсветить выпавший пункт в списке (пока ещё не перенесён в «уже выпало»)
+  document.querySelectorAll('#prizeList li').forEach(l=>l.classList.toggle('active', +l.dataset.index===prize._idx));
+  const li=document.querySelector(`#prizeList li[data-index="${prize._idx}"]`);
+  if(li) li.scrollIntoView({behavior:'smooth',block:'nearest'});
+
+  if(prize.type==='skull'){
+    document.getElementById('skullText').textContent = secret ? secret.text : 'Колесо пощадило тебя… на этот раз.';
     setTimeout(()=>document.getElementById('skullOverlay').classList.add('show'),400);
   } else {
-    document.getElementById('result').innerHTML=`<span class="prize-reveal">🎉 Выпало: <b>${prize.text}</b></span>`;
+    showResultCard(prize, toStrike.length>0, dT);
     confetti({particleCount:110,spread:65,origin:{y:.5},colors:['#d4a843','#f5d07a','#fff','#c0392b']});
   }
+  document.getElementById('result').innerHTML=`<span class="prize-reveal">Выпало: <b></b></span>`;
+  document.querySelector('#result b').textContent = prize.text + (secret?` → ${secret.text}`:'');
+}
+
+// ═══════════ RESULT CARD ═══════════
+let _pendingRefresh=false;
+function showResultCard(prize, struckNow, dT){
+  const meta=TYPE_META[prize.type]||TYPE_META.reward;
+  const card=document.getElementById('resultCard');
+  card.className='rc-'+prize.type;
+  document.getElementById('rcType').textContent=`${meta.icon} ${meta.label}`;
+  document.getElementById('rcTitle').textContent=prize.text;
+  document.getElementById('rcDetail').textContent=prize.detail||'';
+  document.getElementById('rcDetail').style.display=prize.detail?'block':'none';
+  let note='';
+  if(dT>0) note=`+${dT} 🎟️ зачислено · теперь ${state.tickets}`;
+  else if(dT<0) note=`${dT} 🎟️ · осталось ${state.tickets}`;
+  else if(struckNow) note='✂ Этот пункт вычеркнут — больше не выпадет';
+  document.getElementById('rcNote').textContent=note;
+  document.getElementById('rcNote').style.display=note?'block':'none';
+  document.getElementById('resultOverlay').classList.add('show');
+  _pendingRefresh=true;
+}
+function closeResultCard(){
+  document.getElementById('resultOverlay').classList.remove('show');
+  refreshWheelAfterSpin();
+}
+function refreshWheelAfterSpin(){
+  if(!_pendingRefresh) return;
+  _pendingRefresh=false;
+  buildPrizeList(); drawWheel(wheelAngle);
 }
 
 function closeSkull(){
   document.getElementById('skullOverlay').classList.remove('show');
   confetti({particleCount:60,spread:50,colors:['#8b1a1a','#c0392b','#fff']});
+  _pendingRefresh=true; refreshWheelAfterSpin();
 }
 
 function resetWheel(){
@@ -1121,9 +1264,6 @@ let lvAnim=null;
 function animateLever(){
   if(lvAnim) cancelAnimationFrame(lvAnim);
   const arm=document.getElementById('leverArm');
-  // Phase 1 (0→0.25): pull down to -38deg
-  // Phase 2 (0.25→0.55): hold
-  // Phase 3 (0.55→1.0): smooth return to 0
   const PULL=22, DUR=1100; let t0=null;
   function easeIn(t){ return t*t; }
   function easeOut(t){ return 1-(1-t)*(1-t); }
@@ -1134,7 +1274,6 @@ function animateLever(){
     if(t<0.25)      deg=PULL*easeIn(t/0.25);
     else if(t<0.55) deg=PULL;
     else            deg=PULL*(1-easeOut((t-0.55)/0.45));
-    // rotate(deg, pivotX, pivotY) — SVG rotates around (200,432) which is the collar
     arm.setAttribute('transform',`rotate(${deg},200,432)`);
     if(t<1) lvAnim=requestAnimationFrame(frame);
     else { arm.removeAttribute('transform'); lvAnim=null; }
@@ -1145,8 +1284,20 @@ function animateLever(){
 // ═══════════ UI ═══════════
 function updateUI(){
   document.getElementById('ticketsCount').textContent=state.tickets;
-  document.getElementById('spinBtn').disabled=state.tickets<=0||state.spinsToday>=DAY_LIMIT;
+  const empty=!getWheelPrizes().length;
+  const blocked=state.tickets<=0||state.spinsToday>=DAY_LIMIT||empty;
+  document.getElementById('spinBtn').disabled=blocked;
   document.getElementById('spinsInfo').textContent=`Крутки: ${state.spinsToday}/${DAY_LIMIT} сег.`;
+  const st=document.getElementById('spinStatus');
+  if(st){
+    let msg;
+    if(empty) msg='Всё колесо уже выпало — жди новых пунктов';
+    else if(state.tickets<=0) msg='Билеты закончились — загляни на доску контрактов';
+    else if(state.spinsToday>=DAY_LIMIT) msg='На сегодня всё — приходи завтра';
+    else { const left=DAY_LIMIT-state.spinsToday; msg=`🎟️ ${state.tickets} · сегодня осталось ${left} ${left===1?'крутка':'крутки'}`; }
+    st.textContent=msg;
+    st.classList.toggle('warn', blocked);
+  }
 }
 function flashMsg(m){ document.getElementById('result').innerHTML=`<span class="prize-reveal" style="color:var(--red)">${m}</span>`; }
 
@@ -1290,7 +1441,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Все ключи грузим из Supabase параллельно (раньше — по одному, это и было «думает»)
   const keys = ['fnv_state','fnv_contracts','fnv_weekly_queue','fnv_weekly','fnv_coins',
-                'fnv_guaranteed','fnv_prizes','fnv_hidden','fnv_weekly_bonus_enabled'];
+                'fnv_guaranteed','fnv_prizes','fnv_hidden','fnv_weekly_bonus_enabled','fnv_struck'];
   const vals = await Promise.all(keys.map(k => sbGet(k)));
   keys.forEach((k, i) => {
     const v = vals[i];
@@ -1322,17 +1473,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // Poll Supabase every 5s for live updates (tickets, contracts, prizes)
 setInterval(async () => {
-  const remotePrizes = await sbGet('fnv_prizes');
-  if (remotePrizes) {
-    const current = localStorage.getItem('fnv_prizes');
-    const newVal  = JSON.stringify(remotePrizes);
-    if (current !== newVal) {
-      // Prizes changed — refresh wheel and list
-      localStorage.setItem('fnv_prizes', newVal);
-      buildPrizeList();
-      initWheel();
-    }
-  }
+  // Призы / вычеркнутые / тайные — если что-то поменялось в админке, перерисовать колесо
+  const [remotePrizes, remoteStruck, remoteHiddenP] = await Promise.all([sbGet('fnv_prizes'), sbGet('fnv_struck'), sbGet('fnv_hidden')]);
+  let wheelChanged = false;
+  const syncKey = (k, v) => {
+    if (v === null || v === undefined) return;
+    const nv = JSON.stringify(v);
+    if (localStorage.getItem(k) !== nv) { localStorage.setItem(k, nv); wheelChanged = true; }
+  };
+  syncKey('fnv_prizes', remotePrizes);
+  syncKey('fnv_struck', remoteStruck);
+  syncKey('fnv_hidden', remoteHiddenP);
+  const gsEl = document.getElementById('gameScreen');
+  const resultOpen = document.getElementById('resultOverlay').classList.contains('show') || document.getElementById('skullOverlay').classList.contains('show');
+  if (wheelChanged && !spinning && !resultOpen && gsEl.style.display === 'block') { buildPrizeList(); initWheel(); updateUI(); }
   // Also refresh state
   const remoteState = await sbGet('fnv_state');
   if (remoteState && !spinning && _pendingStateWrites === 0 && !_recentLocalWrite(_lastLocalStateWrite)) {
@@ -1346,8 +1500,6 @@ setInterval(async () => {
     if (remoteCoins) localStorage.setItem('fnv_coins', JSON.stringify(remoteCoins));
   }
   updateCoinsUI();
-  const pollHidden = await sbGet('fnv_hidden');
-  if (pollHidden) localStorage.setItem('fnv_hidden', JSON.stringify(pollHidden));
   // Weekly bonus on/off + weekly claimed flags
   const wbe = await sbGet('fnv_weekly_bonus_enabled');
   if (wbe !== null) localStorage.setItem('fnv_weekly_bonus_enabled', JSON.stringify(wbe));
@@ -1945,96 +2097,7 @@ function getGuaranteed() {
 }
 
 // Patch startSpin to check for guaranteed result
-const _origStartSpin = startSpin;
-startSpin = function() {
-  checkDay();
-  const g = getGuaranteed();
-  if (g !== null) {
-    // ── GUARANTEED SPIN ──
-    try {
-    if (spinning) return;
-    if (state.tickets <= 0) { flashMsg('Нет билетов!'); return; }
-    if (state.spinsToday >= DAY_LIMIT) { flashMsg(`Лимит: ${DAY_LIMIT} крутки в день`); return; }
-
-    spinning = true;
-    state.tickets--; state.spinsToday++;
-    saveState(); updateUI();
-    document.getElementById('result').innerHTML = '';
-    document.querySelectorAll('#prizeList li').forEach(l => l.classList.remove('active'));
-    animateLever();
-
-    const ep      = getEffectivePrizes();
-    const weights = getWeights();
-    const totalW  = weights.reduce((a,b) => a + Math.max(0,b), 0) || ep.length;
-
-    // Safety: if g is out of range, fall back to normal spin
-    if (g >= ep.length || g >= weights.length) {
-      localStorage.removeItem(GUARANTEED_KEY);
-      sbDelete(GUARANTEED_KEY);
-      spinning = false;
-      state.tickets++; state.spinsToday--;
-      saveState(); updateUI();
-      _origStartSpin();
-      return;
-    }
-
-    // Find the mid-point angle of target segment in wheel-local space [0, 2π)
-    let acc = 0;
-    for (let i = 0; i < g; i++) {
-      acc += (Math.max(0, weights[i]) / totalW) * Math.PI * 2;
-    }
-    const segW       = (Math.max(0, weights[g]) / totalW) * Math.PI * 2;
-    // Aim for 60% into the segment (not 50%) to avoid floating-point boundary issues
-    const targetLocal = acc + segW * 0.6;
-
-    // Wheel draws segments starting at (wheelAngle - π/2).
-    // getPrizeAtTop checks: ptr = (-wheelAngle mod 2π) against segment accumulator.
-    // We want ptr === targetLocal, so:
-    //   -finalAngle ≡ targetLocal (mod 2π)
-    //   finalAngle  = -targetLocal + 2π*k
-    // Choose k so finalAngle > a0 + 8 full rotations (guarantee forward spin)
-    const a0       = wheelAngle;
-    const base     = -targetLocal;
-    // How much MORE than a0 do we need to rotate (at least 8 full turns)?
-    const minRot   = 8 * Math.PI * 2;
-    // Find k: base + 2π*k >= a0 + minRot
-    const k        = Math.ceil((a0 + minRot - base) / (Math.PI * 2));
-    const finalAngle = base + k * Math.PI * 2;
-    const totalRot   = finalAngle - a0;
-
-    const dur = 5800, t0 = performance.now();
-    function easeGuaranteed(t) { return 1 - Math.pow(1 - t, 3.8); }
-
-    function frame(now) {
-      const t = Math.min((now - t0) / dur, 1);
-      wheelAngle = a0 + totalRot * easeGuaranteed(t);
-      drawWheel(wheelAngle);
-      if (t < 1) {
-        animId = requestAnimationFrame(frame);
-      } else {
-        wheelAngle = finalAngle;
-        drawWheel(wheelAngle);
-        spinning = false;
-        // Clear guaranteed before onSpinEnd so getPrizeAtTop reads normally
-        localStorage.removeItem(GUARANTEED_KEY);
-        sbSet(GUARANTEED_KEY, null);
-        onSpinEnd();
-      }
-    }
-    animId = requestAnimationFrame(frame);
-
-    } catch(err) {
-      // If anything crashes in guaranteed spin, fall back to normal
-      console.error('Guaranteed spin error:', err);
-      spinning = false;
-      localStorage.removeItem(GUARANTEED_KEY);
-      sbDelete(GUARANTEED_KEY);
-      _origStartSpin();
-    }
-  } else {
-    _origStartSpin();
-  }
-};
+// Подкрутка обрабатывается прямо в startSpin()
 </script>
 
 

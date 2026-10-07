@@ -77,7 +77,7 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;b
 .pe-pct.over{border-color:var(--red);color:var(--red)}
 .pe-type{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.75rem;padding:.25rem .3rem;outline:none;cursor:pointer}
 .pe-type:focus{border-color:var(--gold)}
-.prize-row-main{display:grid;grid-template-columns:1fr 90px 90px 80px 26px 36px;gap:.4rem;align-items:center;width:100%}
+.prize-row-main{display:grid;grid-template-columns:1fr 64px 124px 34px 36px 26px 32px;gap:.4rem;align-items:center;width:100%}
 .prize-detail-row{display:none;margin-top:.3rem;padding:.3rem 0 .1rem;border-top:1px solid var(--border2);}
 .prize-detail-row.open{display:flex;gap:.5rem;align-items:flex-start;}
 .pe-detail{width:100%;background:rgba(212,168,67,.04);border:1px solid var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.74rem;padding:.35rem .5rem;outline:none;resize:vertical;min-height:52px;line-height:1.5;transition:border-color .2s;}
@@ -118,6 +118,21 @@ canvas#previewCanvas{border-radius:50%;background:#080604;box-shadow:0 0 0 6px #
 .hist-date{color:var(--dim);font-size:.68rem}
 .hist-empty{color:var(--dim);text-align:center;padding:2rem;font-size:.82rem}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gold-d)}
+
+/* ── NAV ── */
+.anav{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;gap:.3rem;padding:.5rem 1.5rem;background:rgba(10,8,4,.94);border-bottom:1px solid var(--border);backdrop-filter:blur(4px)}
+.anav a{font-size:.72rem;color:var(--dim);text-decoration:none;padding:.25rem .6rem;border:1px solid var(--border2);letter-spacing:.05em;transition:all .15s}
+.anav a:hover{color:var(--gold-l);border-color:var(--gold-d)}
+.card{scroll-margin-top:3.2rem}
+/* ── STRUCK / DIRTY ── */
+.pe-once{display:flex;align-items:center;justify-content:center;gap:.2rem;font-size:.8rem;color:var(--dim);cursor:pointer;user-select:none}
+.pe-once input{accent-color:var(--gold);width:15px;height:15px;cursor:pointer}
+.prize-row.struck .pe-name{text-decoration:line-through;text-decoration-color:var(--red);color:var(--dim)}
+.prize-row.struck{background:rgba(192,57,43,.06);border-color:rgba(192,57,43,.25)}
+.struck-bar{display:flex;align-items:center;gap:.6rem;font-size:.7rem;color:#e07a6a;margin-top:.3rem;padding:.25rem .3rem;border-top:1px dashed rgba(192,57,43,.3)}
+.struck-bar button,.mini-btn{font-family:'Share Tech Mono',monospace;font-size:.68rem;padding:.15rem .5rem;background:rgba(212,168,67,.08);border:1px solid var(--gold-d);color:var(--gold);cursor:pointer}
+.struck-bar button:hover,.mini-btn:hover{background:rgba(212,168,67,.22)}
+.dirty{font-size:.7rem;color:#e0a040;letter-spacing:.05em;text-transform:none;font-family:'Share Tech Mono',monospace}
 
 /* ── TOAST ── */
 #toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9998;padding:.7rem 1.2rem;background:var(--bg3);border:1px solid var(--gold-d);color:var(--gold-l);font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none}
@@ -192,7 +207,7 @@ function setState(s) {
 async function refreshFromSupabase() {
   const keys = ['fnv_state','fnv_contracts','fnv_weekly','fnv_weekly_queue',
                  'fnv_coins','fnv_guaranteed','fnv_prizes','fnv_weekly_bonus_enabled',
-                 'fnv_pending','fnv_hidden'];
+                 'fnv_pending','fnv_hidden','fnv_struck'];
   for (const k of keys) {
     try {
       const v = await sbGet(k);
@@ -228,18 +243,26 @@ async function refreshFromSupabase() {
     </div>
   </div>
 
+  <nav class="anav">
+    <a href="#sec-stats">📊 Игрок</a><a href="#sec-prizes">🎰 Призы</a><a href="#sec-owed">📌 Долги</a>
+    <a href="#sec-hidden">💀 Тайные</a><a href="#sec-history">📜 История</a><a href="#sec-contracts">📋 Контракты</a>
+    <a href="#sec-cards">🃏 Карточки</a><a href="#sec-coins">💰 Монеты</a><a href="#sec-guaranteed">🎯 Подкрутка</a>
+  </nav>
+
   <div class="body">
     <!-- LEFT COLUMN -->
     <div>
 
       <!-- STATS -->
-      <div class="card">
+      <div class="card" id="sec-stats">
         <div class="card-title">📊 Статистика игрока</div>
         <div class="stats">
           <div class="stat"><div class="v" id="s-tickets">—</div><div class="l">БИЛЕТОВ У МОТИ</div></div>
           <div class="stat"><div class="v" id="s-spins">—</div><div class="l">КРУТОК СЕГОДНЯ / ЛИМИТ</div></div>
           <div class="stat"><div class="v" id="s-total">—</div><div class="l">ВСЕГО КРУТОК</div></div>
           <div class="stat"><div class="v" id="s-last" style="font-size:1rem;padding-top:.3rem">—</div><div class="l">ПОСЛЕДНИЙ ПРИЗ</div></div>
+          <div class="stat"><div class="v" id="s-wheel">—</div><div class="l">ПУНКТОВ НА КОЛЕСЕ / ВЫЧЕРКНУТО</div></div>
+          <div class="stat"><div class="v" id="s-owed">—</div><div class="l">НЕВЫПОЛНЕННЫХ ВЫИГРЫШЕЙ</div></div>
         </div>
       </div>
 
@@ -261,16 +284,24 @@ async function refreshFromSupabase() {
       </div>
 
       <!-- PRIZE EDITOR -->
-      <div class="card">
+      <div class="card" id="sec-prizes">
         <div class="card-title">
           🎰 Призы и вероятности
-          <div style="display:flex;gap:.5rem">
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <span class="dirty" id="prizesDirty"></span>
             <button class="btn btn-g" onclick="addPrize()" style="padding:.3rem .8rem;font-size:.75rem">+ Добавить</button>
             <button class="btn btn-o" onclick="savePrizes()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
           </div>
         </div>
 
-        <div class="note">Вероятность задаётся в процентах. Сумма должна быть ровно 100%. Нули — сектор убран с колеса.</div>
+        <div class="note">Вероятность задаётся в процентах, сумма — ровно 100%. Ноль — сектор убран с колеса.<br>
+          <b>✂</b> — пункт вычёркивается после выпадения. Вычеркнутые проценты автоматически делятся между оставшимися.
+          Вычеркнутый пункт возвращается кнопкой «↺ Вернуть» (или если поменять его название).
+          Изменения названий/процентов/флажков применяются после «💾 Сохранить».</div>
+        <div id="struckSummary" style="display:none;align-items:center;justify-content:space-between;gap:.6rem;margin-bottom:.6rem;padding:.45rem .7rem;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.25);font-size:.75rem;color:#e07a6a">
+          <span id="struckSummaryText"></span>
+          <button class="mini-btn" onclick="unstrikeAll()">↺ Вернуть все</button>
+        </div>
 
         <!-- Progress bar -->
         <div class="pct-bar-wrap">
@@ -281,8 +312,8 @@ async function refreshFromSupabase() {
           </div>
         </div>
 
-        <div class="pe-header" style="display:grid;grid-template-columns:1fr 90px 90px 80px 26px 36px;gap:.4rem;">
-          <span>НАЗВАНИЕ</span><span style="text-align:center">% ШАНС</span><span style="text-align:center">ТИП</span><span style="text-align:center">ЦВЕТ</span><span style="text-align:center">ℹ</span><span></span>
+        <div class="pe-header" style="display:grid;grid-template-columns:1fr 64px 124px 34px 36px 26px 32px;gap:.4rem;">
+          <span>НАЗВАНИЕ</span><span style="text-align:center">% ШАНС</span><span style="text-align:center">ТИП</span><span style="text-align:center">ЦВЕТ</span><span style="text-align:center" title="Вычёркивается после выпадения">✂</span><span style="text-align:center">ℹ</span><span></span>
         </div>
         <div id="prizeEditor"></div>
 
@@ -293,27 +324,29 @@ async function refreshFromSupabase() {
       </div>
 
       <!-- OWED (fnv_pending) -->
-      <div class="card">
+      <div class="card" id="sec-owed">
         <div class="card-title">📌 Невыполненные выигрыши</div>
         <div class="note">Всё, что выпало на колесе и ещё не «отдано» — награды, наказания, тайные наказания. Одинаковые складываются (×2, ×3). «✓ Выполнено» убирает одно, 🗑 — удаляет строку целиком.</div>
         <div id="owedList"></div>
       </div>
 
       <!-- HIDDEN PUNISHMENTS (fnv_hidden) -->
-      <div class="card">
+      <div class="card" id="sec-hidden">
         <div class="card-title">💀 Тайные наказания
-          <div style="display:flex;gap:.5rem">
+          <div style="display:flex;gap:.5rem;align-items:center">
+            <span class="dirty" id="hiddenDirty"></span>
             <button class="btn btn-g" onclick="addHidden()" style="padding:.3rem .8rem;font-size:.75rem">+ Добавить</button>
             <button class="btn btn-o" onclick="saveHidden()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
           </div>
         </div>
-        <div class="note">Выбираются, когда выпадает «💀 Тайное наказание». Число — относительный вес (шанс = вес / сумма весов), до 100 добивать не нужно.</div>
+        <div class="note">Выбираются, когда выпадает «💀 Тайное наказание». Число — относительный вес (шанс = вес / сумма весов), до 100 добивать не нужно.
+          <b>✂</b> — вычёркивается после выпадения. Когда все тайные вычеркнуты, сектор «Тайное наказание» сам пропадает с колеса.</div>
         <div id="hiddenEditor"></div>
         <div id="hiddenSum" style="font-size:.72rem;color:var(--dim);margin-top:.4rem"></div>
       </div>
 
       <!-- HISTORY -->
-      <div class="card">
+      <div class="card" id="sec-history">
         <div class="card-title">📜 История круток
           <button class="btn btn-r" onclick="clearHistory()" style="padding:.3rem .8rem;font-size:.75rem">Очистить</button>
         </div>
@@ -336,8 +369,95 @@ async function refreshFromSupabase() {
       </div>
 
 
-        <!-- WEEKLY CARDS QUEUE -->
+        <!-- COINS MANAGEMENT -->
+        <div class="card" id="sec-coins">
+          <div class="card-title">💰 Яриккоины и Андрейкоины</div>
+          <div class="note">Изменения применяются сразу. 1 монета = 2 билета, 3 билета = 1 монета.</div>
+          <div style="display:grid;grid-template-columns:1fr;gap:.8rem;margin-bottom:1rem">
+            <!-- Yarik coins -->
+            <div style="background:var(--bg3);border:1px solid var(--border2);padding:.8rem">
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
+                <span style="font-size:1.4rem">🟡</span>
+                <div>
+                  <div style="font-size:.7rem;color:var(--dim);letter-spacing:.1em">ЯРИККОИНЫ</div>
+                  <div style="font-family:'Oswald',sans-serif;font-size:1.6rem;color:var(--gold-l)" id="adm-yarik">0</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.4rem">
+                <input class="tinp" type="number" id="yarik-amt" value="1" min="0" style="padding:.3rem .5rem;font-size:.85rem">
+                <button class="btn btn-g" onclick="adminAddCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">+</button>
+                <button class="btn btn-r" onclick="adminRemoveCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">−</button>
+                <button class="btn btn-o" onclick="adminSetCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">=</button>
+              </div>
+            </div>
+            <!-- Andrei coins -->
+            <div style="background:var(--bg3);border:1px solid var(--border2);padding:.8rem">
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
+                <span style="font-size:1.4rem">🔵</span>
+                <div>
+                  <div style="font-size:.7rem;color:var(--dim);letter-spacing:.1em">АНДРЕЙКОИНЫ</div>
+                  <div style="font-family:'Oswald',sans-serif;font-size:1.6rem;color:#5ab4e0" id="adm-andrei">0</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.4rem">
+                <input class="tinp" type="number" id="andrei-amt" value="1" min="0" style="padding:.3rem .5rem;font-size:.85rem">
+                <button class="btn btn-g" onclick="adminAddCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">+</button>
+                <button class="btn btn-r" onclick="adminRemoveCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">−</button>
+                <button class="btn btn-o" onclick="adminSetCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">=</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GUARANTEED SPIN -->
+        <div class="card" id="sec-guaranteed">
+          <div class="card-title">🎯 Гарантированный выпад
+            <span id="guaranteed-badge" style="display:none;font-size:.7rem;background:var(--red);color:#fff;padding:.15rem .5rem;letter-spacing:.05em">АКТИВНО</span>
+          </div>
+          <div class="note">При следующей крутке колесо гарантированно остановится на выбранном варианте. Потом сбросится автоматически.</div>
+          <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.7rem;flex-wrap:wrap">
+            <select id="guaranteedSelect" style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.82rem;padding:.5rem .7rem;outline:none">
+              <option value="">— Выбери приз —</option>
+            </select>
+            <button class="btn btn-g" onclick="setGuaranteed()" style="padding:.5rem 1rem;font-size:.82rem">✓ Установить</button>
+            <button class="btn btn-r" onclick="clearGuaranteed()" style="padding:.5rem 1rem;font-size:.82rem">✗ Сбросить</button>
+          </div>
+          <div id="guaranteed-current" style="font-size:.8rem;color:var(--dim)">Гарантированный выпад не установлен</div>
+        </div>
+
+    </div>
+
+    <!-- FULL WIDTH: contracts + cards -->
+    <div style="grid-column:1 / -1">
+        <!-- CONTRACTS MANAGEMENT -->
+        <div class="card" id="sec-contracts" style="grid-column: 1 / -1">
+          <div class="card-title">📋 Доска контрактов
+            <div style="display:flex;gap:.5rem">
+              <button class="btn btn-g" onclick="addContract()" style="padding:.3rem .8rem;font-size:.75rem">+ Добавить</button>
+              <button class="btn btn-o" onclick="saveContracts()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
+            </div>
+          </div>
+
+          <!-- Pending confirmations -->
+          <div id="pendingSection" style="display:none;margin-bottom:1rem">
+            <div style="font-size:.75rem;color:#c0392b;letter-spacing:.1em;margin-bottom:.5rem;padding:.4rem .6rem;background:rgba(192,57,43,.1);border-left:2px solid #c0392b">
+              ⚠ ОЖИДАЮТ ПОДТВЕРЖДЕНИЯ
+            </div>
+            <div id="pendingList"></div>
+          </div>
+
+          <div class="note">Перетаскивай карточки для изменения порядка. Изменения сохрани кнопкой выше.</div>
+
+          <div id="contractEditorList" style="display:flex;flex-direction:column;gap:.5rem"></div>
+        </div>
+
+        <!-- CONTRACTS ARCHIVE -->
         <div class="card" style="grid-column: 1 / -1">
+          <div class="card-title">📦 Архив контрактов</div>
+          <div id="contractArchiveList" style="display:flex;flex-wrap:wrap;gap:.7rem"></div>
+        </div>
+        <!-- WEEKLY CARDS QUEUE -->
+        <div class="card" id="sec-cards" style="grid-column: 1 / -1">
           <div class="card-title">🃏 Очередь еженедельных карточек
             <div style="display:flex;gap:.5rem;align-items:center">
               <span style="font-size:.72rem;color:var(--dim)" id="cardsWeekInfo"></span>
@@ -345,7 +465,7 @@ async function refreshFromSupabase() {
             </div>
           </div>
           <!-- Weekly bonus toggle -->
-          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border2);padding:.7rem 1rem;margin-bottom:.8rem;">
+          <div style="display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border2);padding:.7rem 1rem;margin-bottom:.8rem;">
             <div>
               <div style="font-size:.82rem;color:var(--text);margin-bottom:.2rem">🎟️ Еженедельный бонусный билет</div>
               <div style="font-size:.72rem;color:var(--dim)">Пользователь может получить +1 билет при открытии карточки недели</div>
@@ -389,89 +509,6 @@ async function refreshFromSupabase() {
         </div>
 
 
-        <!-- COINS MANAGEMENT -->
-        <div class="card">
-          <div class="card-title">💰 Яриккоины и Андрейкоины</div>
-          <div class="note">Изменения применяются сразу. 1 монета = 2 билета, 3 билета = 1 монета.</div>
-          <div style="display:grid;grid-template-columns:1fr;gap:.8rem;margin-bottom:1rem">
-            <!-- Yarik coins -->
-            <div style="background:var(--bg3);border:1px solid var(--border2);padding:.8rem">
-              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
-                <span style="font-size:1.4rem">🟡</span>
-                <div>
-                  <div style="font-size:.7rem;color:var(--dim);letter-spacing:.1em">ЯРИККОИНЫ</div>
-                  <div style="font-family:'Oswald',sans-serif;font-size:1.6rem;color:var(--gold-l)" id="adm-yarik">0</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:.4rem">
-                <input class="tinp" type="number" id="yarik-amt" value="1" min="0" style="padding:.3rem .5rem;font-size:.85rem">
-                <button class="btn btn-g" onclick="adminAddCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">+</button>
-                <button class="btn btn-r" onclick="adminRemoveCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">−</button>
-                <button class="btn btn-o" onclick="adminSetCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">=</button>
-              </div>
-            </div>
-            <!-- Andrei coins -->
-            <div style="background:var(--bg3);border:1px solid var(--border2);padding:.8rem">
-              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
-                <span style="font-size:1.4rem">🔵</span>
-                <div>
-                  <div style="font-size:.7rem;color:var(--dim);letter-spacing:.1em">АНДРЕЙКОИНЫ</div>
-                  <div style="font-family:'Oswald',sans-serif;font-size:1.6rem;color:#5ab4e0" id="adm-andrei">0</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:.4rem">
-                <input class="tinp" type="number" id="andrei-amt" value="1" min="0" style="padding:.3rem .5rem;font-size:.85rem">
-                <button class="btn btn-g" onclick="adminAddCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">+</button>
-                <button class="btn btn-r" onclick="adminRemoveCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">−</button>
-                <button class="btn btn-o" onclick="adminSetCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">=</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- GUARANTEED SPIN -->
-        <div class="card">
-          <div class="card-title">🎯 Гарантированный выпад
-            <span id="guaranteed-badge" style="display:none;font-size:.7rem;background:var(--red);color:#fff;padding:.15rem .5rem;letter-spacing:.05em">АКТИВНО</span>
-          </div>
-          <div class="note">При следующей крутке колесо гарантированно остановится на выбранном варианте. Потом сбросится автоматически.</div>
-          <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.7rem;flex-wrap:wrap">
-            <select id="guaranteedSelect" style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.82rem;padding:.5rem .7rem;outline:none">
-              <option value="">— Выбери приз —</option>
-            </select>
-            <button class="btn btn-g" onclick="setGuaranteed()" style="padding:.5rem 1rem;font-size:.82rem">✓ Установить</button>
-            <button class="btn btn-r" onclick="clearGuaranteed()" style="padding:.5rem 1rem;font-size:.82rem">✗ Сбросить</button>
-          </div>
-          <div id="guaranteed-current" style="font-size:.8rem;color:var(--dim)">Гарантированный выпад не установлен</div>
-        </div>
-
-        <!-- CONTRACTS MANAGEMENT -->
-        <div class="card" style="grid-column: 1 / -1">
-          <div class="card-title">📋 Доска контрактов
-            <div style="display:flex;gap:.5rem">
-              <button class="btn btn-g" onclick="addContract()" style="padding:.3rem .8rem;font-size:.75rem">+ Добавить</button>
-              <button class="btn btn-o" onclick="saveContracts()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
-            </div>
-          </div>
-
-          <!-- Pending confirmations -->
-          <div id="pendingSection" style="display:none;margin-bottom:1rem">
-            <div style="font-size:.75rem;color:#c0392b;letter-spacing:.1em;margin-bottom:.5rem;padding:.4rem .6rem;background:rgba(192,57,43,.1);border-left:2px solid #c0392b">
-              ⚠ ОЖИДАЮТ ПОДТВЕРЖДЕНИЯ
-            </div>
-            <div id="pendingList"></div>
-          </div>
-
-          <div class="note">Перетаскивай карточки для изменения порядка. Изменения сохрани кнопкой выше.</div>
-
-          <div id="contractEditorList" style="display:flex;flex-direction:column;gap:.5rem"></div>
-        </div>
-
-        <!-- CONTRACTS ARCHIVE -->
-        <div class="card" style="grid-column: 1 / -1">
-          <div class="card-title">📦 Архив контрактов</div>
-          <div id="contractArchiveList" style="display:flex;flex-wrap:wrap;gap:.7rem"></div>
-        </div>
     </div>
   </div>
 </div>
@@ -589,6 +626,10 @@ async function init(){
       try { renderGuaranteedAdmin(); } catch(e) {}
       try { renderOwed(); } catch(e) {}
       try { renderHistory(); } catch(e) {}
+      try {
+        const st = localStorage.getItem(STRUCK_KEY);
+        if (st !== window._lastStruckJSON) { window._lastStruckJSON = st; renderPrizeEditor(); renderHiddenEditor(); drawPreview(); renderGuaranteedAdmin(); }
+      } catch(e) {}
       // Contracts: only refresh pending section, not the editor (to avoid resetting inputs)
       try {
         const cur = localStorage.getItem(CK);
@@ -613,6 +654,14 @@ async function renderStats(){
   document.getElementById('s-total').textContent    = (s.history || []).length;
   document.getElementById('s-last').textContent     = s.history?.[0]?.prize?.slice(0,18) ?? '—';
   document.getElementById('cur-tickets').textContent = s.tickets ?? '—';
+  try {
+    const struck = loadStruck();
+    const all = loadPrizes().filter(p => (parseFloat(p.pct)||0) > 0);
+    const gone = all.filter(p => struck.includes(prizeKeyA(p))).length;
+    document.getElementById('s-wheel').textContent = `${all.length - gone} / ${gone}`;
+    const owed = loadOwed().reduce((a,o)=>a+(o.count||1),0);
+    document.getElementById('s-owed').textContent = owed;
+  } catch(e) {}
 }
 
 // ══════════════════════════════════════
@@ -633,11 +682,14 @@ async function resetSpins(){ const s=await freshGameState(); s.spinsToday=0; s.l
 // ══════════════════════════════════════
 //  PRIZE EDITOR
 // ══════════════════════════════════════
+const TYPE_LABELS={reward:'🎁 Награда',bonus:'🎟️ Бонус',penalty:'⚠️ Наказание',skull:'💀 Тайное',special:'☣️ Особое'};
 function renderPrizeEditor(){
   const el=document.getElementById('prizeEditor'); el.innerHTML='';
+  const struck=loadStruck();
   prizes.forEach((p,i)=>{
     const row=document.createElement('div');
-    row.className='prize-row';
+    const isStruck=struck.includes(prizeKeyA(p));
+    row.className='prize-row'+(isStruck?' struck':'');
 
     const mainRow=document.createElement('div');
     mainRow.className='prize-row-main';
@@ -645,14 +697,23 @@ function renderPrizeEditor(){
       <input class="pe-name" value="${esc(p.text)}" placeholder="Название" onchange="prizes[${i}].text=this.value; schedulePreview()">
       <input class="pe-pct" type="number" min="0" max="100" step="0.5" value="${p.pct}" id="pct-${i}"
         oninput="prizes[${i}].pct=parseFloat(this.value)||0; updatePctBar(); schedulePreview()">
-      <select class="pe-type" onchange="prizes[${i}].type=this.value; schedulePreview()">
-        ${['reward','bonus','penalty','skull','special'].map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}
+      <select class="pe-type" onchange="prizes[${i}].type=this.value; schedulePreview(); renderPrizeEditor()">
+        ${Object.keys(TYPE_LABELS).map(t=>`<option value="${t}"${p.type===t?' selected':''}>${TYPE_LABELS[t]}</option>`).join('')}
       </select>
       <input type="color" class="pe-color" value="${p.color}" onchange="prizes[${i}].color=this.value; schedulePreview()" title="Цвет сектора">
+      <label class="pe-once" title="Вычёркивается после выпадения"><input type="checkbox" ${isOneTimeA(p)?'checked':''} onchange="prizes[${i}].oneTime=this.checked; markDirty('prizes')"></label>
       <button class="pe-expand" id="expand-${i}" onclick="togglePrizeDetail(${i})" title="Описание для пользователя">▾</button>
       <button class="pe-del" onclick="deletePrize(${i})" title="Удалить">×</button>
     `;
     row.appendChild(mainRow);
+
+    if(isStruck){
+      const bar=document.createElement('div'); bar.className='struck-bar';
+      bar.innerHTML=`<span>✂ Вычеркнут — уже выпадал, на колесе его сейчас нет</span>`;
+      const b=document.createElement('button'); b.textContent='↺ Вернуть на колесо';
+      b.onclick=()=>setStruck(prizeKeyA(p),false);
+      bar.appendChild(b); row.appendChild(bar);
+    }
 
     // Detail row (collapsible)
     const detailRow=document.createElement('div');
@@ -666,7 +727,7 @@ function renderPrizeEditor(){
         <div style="display:flex;align-items:center;gap:.5rem;margin-top:.4rem;font-size:.7rem;color:var(--dim)">
           🎟️ Билеты при выпадении (+ даёт, − забирает, пусто = 0):
           <input type="number" step="1" value="${p.tickets ?? ''}" style="width:70px;background:rgba(212,168,67,.06);border:1px solid var(--gold-d);color:var(--gold-l);font-family:'Share Tech Mono',monospace;padding:.2rem .3rem;text-align:center"
-            onchange="prizes[${i}].tickets=this.value===''?0:parseInt(this.value)||0">
+            onchange="prizes[${i}].tickets=this.value===''?0:parseInt(this.value)||0; renderPrizeEditor()">
         </div>
       </div>
     `;
@@ -674,6 +735,7 @@ function renderPrizeEditor(){
     el.appendChild(row);
   });
   updatePctBar();
+  updateStruckSummary();
 }
 
 function togglePrizeDetail(i){
@@ -688,11 +750,12 @@ function esc(s){ return s.replace(/"/g,'&quot;'); }
 
 function addPrize(){
   prizes.push({ text:'Новый приз', type:'reward', color:'#122850', pct:0, detail:'' });
-  renderPrizeEditor(); schedulePreview();
+  renderPrizeEditor(); schedulePreview(); markDirty('prizes');
 }
 
 function deletePrize(i){
-  prizes.splice(i,1); renderPrizeEditor(); schedulePreview();
+  if(!confirm(`Удалить «${prizes[i].text}»?`)) return;
+  prizes.splice(i,1); renderPrizeEditor(); schedulePreview(); markDirty('prizes');
 }
 
 function updatePctBar(){
@@ -726,20 +789,23 @@ function autoDistribute(){
   // Fix rounding
   const diff=parseFloat((100-each*prizes.length).toFixed(2));
   prizes[prizes.length-1].pct=parseFloat((each+diff).toFixed(2));
-  renderPrizeEditor(); schedulePreview(); toast('Вероятности распределены поровну');
+  renderPrizeEditor(); schedulePreview(); markDirty('prizes'); toast('Вероятности распределены поровну');
 }
 
 function resetPrizes(){
   if(!confirm('Сбросить все призы к дефолту?')) return;
   prizes=JSON.parse(JSON.stringify(DEFAULT_PRIZES));
-  renderPrizeEditor(); schedulePreview(); toast('Призы сброшены');
+  renderPrizeEditor(); schedulePreview(); markDirty('prizes'); toast('Призы сброшены (не забудь сохранить)');
 }
 
 function savePrizes(){
+  const total=prizes.reduce((a,p)=>a+(parseFloat(p.pct)||0),0);
+  if(Math.abs(total-100)>0.1 && !confirm(`Сумма процентов ${total.toFixed(1)}%, а не 100%. Всё равно сохранить? (Колесо поделит пропорционально.)`)) return;
+  prizes.forEach(p=>{ p.text=(p.text||'').trim()||'Без названия'; });
   savePrizesToStorage();
-  // Also write to game state format for index.html compatibility
-  // index.html reads PK directly if we update it
-  toast('✅ Сохранено! Обнови страницу колеса.');
+  clearDirty('prizes');
+  renderPrizeEditor(); renderGuaranteedAdmin(); drawPreview();
+  toast('✅ Сохранено! У Моти колесо обновится само за несколько секунд.');
   document.getElementById('autoSaveLabel').textContent='Сохранено ✓';
   setTimeout(()=>document.getElementById('autoSaveLabel').textContent='',3000);
 }
@@ -771,7 +837,8 @@ function drawPreview(){
     const sweep=(pct/Math.max(total,100))*Math.PI*2;
     // Segment
     ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,outerR,angle,angle+sweep); ctx.closePath();
-    ctx.fillStyle=i%2===0?p.color:lighten(p.color,15);
+    const pStruck=loadStruck().includes(prizeKeyA(p));
+    ctx.fillStyle=pStruck?'#1c1a17':(i%2===0?p.color:lighten(p.color,15));
     ctx.fill();
     ctx.strokeStyle='rgba(212,168,67,0.45)'; ctx.lineWidth=1.2; ctx.stroke();
 
@@ -787,7 +854,7 @@ function drawPreview(){
       ctx.fillStyle='rgba(232,213,160,.9)'; ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4;
       // Short name
       const short=p.text.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim().split(' ')[0];
-      ctx.fillText(short,0,-fs*.6);
+      ctx.fillText((loadStruck().includes(prizeKeyA(p))?'✂ ':'')+short,0,-fs*.6);
       ctx.font=`500 ${fs*.9}px Share Tech Mono`;
       ctx.fillStyle='rgba(212,168,67,.85)'; ctx.shadowBlur=3;
       ctx.fillText(`${pct}%`,0,fs*.55);
@@ -860,7 +927,7 @@ function renderHistory(){
   if(!hist.length){ el.innerHTML='<div class="hist-empty">История пуста</div>'; return; }
   el.innerHTML=hist.map((h,i)=>`
     <div class="hist-item">
-      <div class="hist-date">#${hist.length-i} · ${h.date}</div>
+      <div class="hist-date">#${hist.length-i} · ${h.date} <span class="badge badge-${h.type||'reward'}">${(TYPE_LABELS[h.type]||h.type||'').replace(/^\S+\s/,'')}</span></div>
       <div>${h.prize}</div>
     </div>`).join('');
 }
@@ -1327,7 +1394,9 @@ function renderGuaranteedAdmin() {
   prizes.forEach((p, i) => {
     const opt = document.createElement('option');
     opt.value = i;
-    opt.textContent = `${i+1}. ${p.text}`;
+    const st = loadStruck().includes(prizeKeyA(p));
+    opt.textContent = `${i+1}. ${p.text}${st ? '  (вычеркнут)' : ''}`;
+    if (st) opt.disabled = true;
     sel.appendChild(opt);
   });
 
@@ -1462,12 +1531,25 @@ function loadHidden(){ try{ const h=JSON.parse(localStorage.getItem(HIDDEN_KEY))
 function renderHiddenEditor(){
   const el=document.getElementById('hiddenEditor'); if(!el) return;
   el.innerHTML='';
+  const struck=loadStruck();
   hiddenList.forEach((h,i)=>{
+    const isStruck=struck.includes('h:'+(h.text||'').trim());
     const row=document.createElement('div');
-    row.style.cssText='display:grid;grid-template-columns:1fr 70px 32px;gap:.4rem;align-items:center;padding:.3rem .4rem;background:var(--bg3);margin-bottom:.3rem';
-    row.innerHTML=`<input class="pe-name" value="${esc(h.text||'')}" onchange="hiddenList[${i}].text=this.value">
-      <input class="pe-pct" type="number" min="0" step="1" value="${h.pct??1}" oninput="hiddenList[${i}].pct=parseFloat(this.value)||0; updateHiddenSum()">
-      <button class="pe-del" onclick="hiddenList.splice(${i},1); renderHiddenEditor()">×</button>`;
+    row.className='prize-row'+(isStruck?' struck':'');
+    const main=document.createElement('div');
+    main.style.cssText='display:grid;grid-template-columns:1fr 70px 40px 32px;gap:.4rem;align-items:center';
+    main.innerHTML=`<input class="pe-name" value="${esc(h.text||'')}" onchange="hiddenList[${i}].text=this.value; markDirty('hidden')">
+      <input class="pe-pct" type="number" min="0" step="1" value="${h.pct??1}" oninput="hiddenList[${i}].pct=parseFloat(this.value)||0; updateHiddenSum(); markDirty('hidden')">
+      <label class="pe-once" title="Вычёркивается после выпадения"><input type="checkbox" ${h.oneTime===false?'':'checked'} onchange="hiddenList[${i}].oneTime=this.checked; markDirty('hidden')"></label>
+      <button class="pe-del" onclick="hiddenList.splice(${i},1); renderHiddenEditor(); markDirty('hidden')">×</button>`;
+    row.appendChild(main);
+    if(isStruck){
+      const bar=document.createElement('div'); bar.className='struck-bar';
+      bar.innerHTML='<span>✂ Вычеркнуто — уже выпадало</span>';
+      const b=document.createElement('button'); b.textContent='↺ Вернуть';
+      b.onclick=()=>setStruck('h:'+(h.text||'').trim(),false);
+      bar.appendChild(b); row.appendChild(bar);
+    }
     el.appendChild(row);
   });
   updateHiddenSum();
@@ -1477,12 +1559,61 @@ function updateHiddenSum(){
   const el=document.getElementById('hiddenSum'); if(!el) return;
   el.innerHTML=hiddenList.length?hiddenList.map(h=>`${(h.text||'').slice(0,28)} — <b style="color:var(--gold-l)">${total?((parseFloat(h.pct)||0)/total*100).toFixed(0):0}%</b>`).join('<br>'):'Список пуст — будет использоваться встроенный.';
 }
-function addHidden(){ hiddenList.push({text:'Новое тайное наказание',pct:10}); renderHiddenEditor(); }
+function addHidden(){ hiddenList.push({text:'Новое тайное наказание',pct:10}); renderHiddenEditor(); markDirty('hidden'); }
 function saveHidden(){
-  const clean=hiddenList.filter(h=>(h.text||'').trim()).map(h=>({text:h.text.trim(),pct:parseFloat(h.pct)||0}));
+  const clean=hiddenList.filter(h=>(h.text||'').trim()).map(h=>({text:h.text.trim(),pct:parseFloat(h.pct)||0,oneTime:h.oneTime!==false}));
   hiddenList=clean; localStorage.setItem(HIDDEN_KEY,JSON.stringify(clean)); sbSet(HIDDEN_KEY,clean);
+  clearDirty('hidden');
   renderHiddenEditor(); toast('✅ Тайные наказания сохранены');
 }
+
+// ════════════════════════
+//  STRIKE-OUT (fnv_struck)
+// ════════════════════════
+const STRUCK_KEY = 'fnv_struck';
+function loadStruck(){ try{ const s=JSON.parse(localStorage.getItem(STRUCK_KEY)); return Array.isArray(s)?s:[]; }catch(e){ return []; } }
+function prizeKeyA(p){ return (p.text||'').trim(); }
+function ticketDeltaA(p){
+  if(p.tickets!==undefined && p.tickets!==null && p.tickets!=='') return parseInt(p.tickets)||0;
+  const m=(p.text||'').match(/([+\-−–])\s*(\d+)\s*билет/i);
+  return m ? (m[1]==='+'?1:-1)*parseInt(m[2]) : 0;
+}
+// По умолчанию: награды/наказания/особые вычёркиваются, бонусы билетами и «тайное» — нет
+function isOneTimeA(p){
+  if(typeof p.oneTime==='boolean') return p.oneTime;
+  return ['reward','penalty','special'].includes(p.type) && !ticketDeltaA(p);
+}
+async function setStruck(key, on){
+  let list=await sbGet(STRUCK_KEY); if(!Array.isArray(list)) list=loadStruck();
+  list=list.filter(k=>k!==key); if(on) list.push(key);
+  localStorage.setItem(STRUCK_KEY,JSON.stringify(list)); await sbSet(STRUCK_KEY,list);
+  window._lastStruckJSON=localStorage.getItem(STRUCK_KEY);
+  renderPrizeEditor(); renderHiddenEditor(); drawPreview(); renderGuaranteedAdmin(); renderStats();
+  toast(on?'✂ Вычеркнуто':'↺ Возвращено на колесо');
+}
+async function unstrikeAll(){
+  if(!confirm('Вернуть на колесо все вычеркнутые пункты (и тайные наказания)?')) return;
+  localStorage.setItem(STRUCK_KEY,'[]'); await sbSet(STRUCK_KEY,[]);
+  window._lastStruckJSON='[]';
+  renderPrizeEditor(); renderHiddenEditor(); drawPreview(); renderGuaranteedAdmin(); renderStats();
+  toast('↺ Всё вернулось на колесо');
+}
+function updateStruckSummary(){
+  const box=document.getElementById('struckSummary'); if(!box) return;
+  const n=loadStruck().length;
+  box.style.display=n?'flex':'none';
+  document.getElementById('struckSummaryText').textContent=`✂ Вычеркнуто пунктов: ${n} (включая тайные наказания)`;
+}
+
+// ════════════════════════
+//  UNSAVED CHANGES
+// ════════════════════════
+const _dirty={prizes:false,hidden:false};
+function markDirty(kind){ _dirty[kind]=true; const el=document.getElementById(kind+'Dirty'); if(el) el.textContent='● не сохранено'; }
+function clearDirty(kind){ _dirty[kind]=false; const el=document.getElementById(kind+'Dirty'); if(el) el.textContent=''; }
+document.getElementById('prizeEditor').addEventListener('change',()=>markDirty('prizes'));
+document.getElementById('prizeEditor').addEventListener('input',()=>markDirty('prizes'));
+window.addEventListener('beforeunload',e=>{ if(_dirty.prizes||_dirty.hidden){ e.preventDefault(); e.returnValue=''; } });
 
 </script>
 </body>
