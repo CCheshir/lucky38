@@ -1,0 +1,1489 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Lucky 38</title>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold:#d4a843;--gold-l:#f5d07a;--gold-d:#8a6a1a;
+  --red:#c0392b;--green:#27ae60;--blue:#2980b9;
+  --bg:#0a0804;--bg2:#120e06;--bg3:#1c1610;--bg4:#241a0c;
+  --border:rgba(212,168,67,0.18);--border2:rgba(212,168,67,0.08);
+  --text:#e8d5a0;--dim:#7a6840;--dim2:#5a4c2c;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Share Tech Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh}
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.06) 2px,rgba(0,0,0,0.06) 4px)}
+
+/* ── LOGIN ── */
+#loginWrap{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:var(--bg)}
+.lcard{width:min(380px,92vw);padding:2.5rem;border:1px solid var(--gold-d);background:var(--bg2);text-align:center}
+.lcard h1{font-family:'Oswald',sans-serif;color:var(--gold);letter-spacing:.2em;font-size:1.4rem;margin-bottom:.3rem}
+.lcard p{color:var(--dim);font-size:.8rem;margin-bottom:1.5rem}
+.inp{width:100%;padding:.75rem 1rem;background:rgba(212,168,67,.05);border:1px solid var(--gold-d);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:1rem;outline:none;text-align:center;letter-spacing:.2em;margin-bottom:1rem}
+.inp:focus{border-color:var(--gold)}
+.lbtn{width:100%;padding:.8rem;background:linear-gradient(180deg,#b8882a,#7a5510);border:1px solid var(--gold);color:var(--gold-l);font-family:'Oswald',sans-serif;font-size:1.1rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
+.lbtn:hover{background:linear-gradient(180deg,#d4a843,#9a6a20)}
+.lerr{color:var(--red);font-size:.85rem;margin-top:.5rem;min-height:1.2rem}
+
+/* ── MAIN ── */
+#mainWrap{display:none}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.5rem;border-bottom:1px solid var(--border);background:rgba(0,0,0,.5)}
+.topbar h1{font-family:'Oswald',sans-serif;color:var(--gold);font-size:1.2rem;letter-spacing:.2em}
+.topbar-right{display:flex;align-items:center;gap:1rem}
+.logout{padding:.35rem .9rem;border:1px solid var(--dim2);background:none;color:var(--dim);cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:.78rem}
+.logout:hover{color:var(--text);border-color:var(--dim)}
+
+/* ── LAYOUT ── */
+.body{display:grid;grid-template-columns:1fr 380px;gap:1.2rem;max-width:1400px;margin:0 auto;padding:1.2rem}
+@media(max-width:900px){.body{grid-template-columns:1fr}}
+
+/* ── CARDS ── */
+.card{background:var(--bg2);border:1px solid var(--border);padding:1.2rem;margin-bottom:1.2rem}
+.card-title{font-family:'Oswald',sans-serif;color:var(--gold);font-size:.95rem;letter-spacing:.18em;text-transform:uppercase;padding-bottom:.6rem;border-bottom:1px solid var(--border);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.stat{background:var(--bg3);border:1px solid var(--border2);padding:.85rem;text-align:center}
+.stat .v{font-family:'Oswald',sans-serif;font-size:1.8rem;color:var(--gold-l)}
+.stat .l{font-size:.68rem;color:var(--dim);margin-top:.15rem}
+
+/* ── TICKETS ── */
+.trow{display:flex;gap:.5rem;margin-top:.5rem}
+.tinp{flex:1;padding:.6rem .8rem;background:rgba(212,168,67,.05);border:1px solid var(--gold-d);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:1rem;outline:none}
+.tinp:focus{border-color:var(--gold)}
+.btn{padding:.6rem 1rem;font-family:'Oswald',sans-serif;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border:1px solid;transition:all .15s;white-space:nowrap}
+.btn-g{background:rgba(39,174,96,.12);border-color:var(--green);color:var(--green)}
+.btn-g:hover{background:rgba(39,174,96,.28)}
+.btn-r{background:rgba(192,57,43,.12);border-color:var(--red);color:var(--red)}
+.btn-r:hover{background:rgba(192,57,43,.28)}
+.btn-o{background:rgba(212,168,67,.1);border-color:var(--gold);color:var(--gold)}
+.btn-o:hover{background:rgba(212,168,67,.25)}
+.btn-b{background:rgba(41,128,185,.12);border-color:var(--blue);color:var(--blue)}
+.btn-b:hover{background:rgba(41,128,185,.28)}
+.note{font-size:.75rem;color:var(--dim);margin-bottom:.6rem;padding:.5rem .7rem;background:rgba(212,168,67,.06);border-left:2px solid var(--gold-d)}
+
+/* ── PRIZE EDITOR ── */
+.prize-editor{width:100%}
+.pe-header{display:grid;grid-template-columns:1fr 90px 90px 80px 36px;gap:.4rem;align-items:center;font-size:.68rem;color:var(--dim);letter-spacing:.08em;padding:0 .4rem .4rem;border-bottom:1px solid var(--border2)}
+.prize-row{display:flex;flex-direction:column;gap:0;padding:.35rem .4rem;background:var(--bg3);border:1px solid transparent;margin-bottom:.3rem;transition:border-color .2s}
+.prize-row:hover{border-color:var(--border)}
+.pe-name{width:100%;background:transparent;border:none;border-bottom:1px solid var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.78rem;padding:.25rem .3rem;outline:none;transition:border-color .2s}
+.pe-name:focus{border-bottom-color:var(--gold)}
+.pe-pct{width:100%;background:rgba(212,168,67,.06);border:1px solid var(--gold-d);color:var(--gold-l);font-family:'Share Tech Mono',monospace;font-size:.85rem;padding:.25rem .4rem;outline:none;text-align:center;transition:border-color .2s}
+.pe-pct:focus{border-color:var(--gold)}
+.pe-pct.over{border-color:var(--red);color:var(--red)}
+.pe-type{width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.75rem;padding:.25rem .3rem;outline:none;cursor:pointer}
+.pe-type:focus{border-color:var(--gold)}
+.prize-row-main{display:grid;grid-template-columns:1fr 90px 90px 80px 26px 36px;gap:.4rem;align-items:center;width:100%}
+.prize-detail-row{display:none;margin-top:.3rem;padding:.3rem 0 .1rem;border-top:1px solid var(--border2);}
+.prize-detail-row.open{display:flex;gap:.5rem;align-items:flex-start;}
+.pe-detail{width:100%;background:rgba(212,168,67,.04);border:1px solid var(--border2);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.74rem;padding:.35rem .5rem;outline:none;resize:vertical;min-height:52px;line-height:1.5;transition:border-color .2s;}
+.pe-detail:focus{border-color:var(--gold);}
+.pe-detail::placeholder{color:var(--dim2);}
+.pe-expand{width:26px;height:26px;background:none;border:1px solid var(--border2);color:var(--dim);cursor:pointer;font-size:.7rem;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;}
+.pe-expand:hover{border-color:var(--gold);color:var(--gold);}
+.pe-expand.open{border-color:var(--gold-d);color:var(--gold-d);}
+.pe-del{width:32px;height:32px;background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.3);color:var(--red);cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.pe-del:hover{background:rgba(192,57,43,.3)}
+.pe-color{width:28px;height:28px;border:1px solid var(--border);cursor:pointer;padding:0;flex-shrink:0}
+
+/* type badge colours */
+.badge{display:inline-block;font-size:.62rem;padding:.1rem .35rem;border-radius:2px}
+.badge-reward {background:rgba(26,74,107,.5);color:#5ab4e0}
+.badge-bonus  {background:rgba(26,74,26,.5); color:#4a8f2a}
+.badge-penalty{background:rgba(74,26,26,.5); color:#c0392b}
+.badge-skull  {background:rgba(30,30,30,.7); color:#888}
+.badge-special{background:rgba(42,10,42,.6); color:#a855f7}
+
+/* ── PERCENT BAR ── */
+.pct-bar-wrap{margin:.8rem 0 .5rem}
+.pct-bar-track{height:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:5px;overflow:hidden}
+.pct-bar-fill{height:100%;transition:width .3s,background .3s;border-radius:5px}
+.pct-labels{display:flex;justify-content:space-between;font-size:.72rem;margin-top:.3rem}
+.pct-used{color:var(--gold-l)}
+.pct-free{color:var(--dim)}
+.pct-warn{color:var(--red)}
+
+/* ── WHEEL PREVIEW ── */
+.wheel-preview-wrap{display:flex;flex-direction:column;align-items:center;gap:.8rem}
+canvas#previewCanvas{border-radius:50%;background:#080604;box-shadow:0 0 0 6px #1a1208,0 0 0 10px var(--gold-d),0 0 0 13px #1a1208,0 0 30px rgba(212,168,67,.2)}
+.pct-donut-label{font-family:'Oswald',sans-serif;font-size:1rem;color:var(--gold);letter-spacing:.1em;text-align:center}
+
+/* ── HISTORY ── */
+.hist-wrap{max-height:280px;overflow-y:auto}
+.hist-item{padding:.4rem .5rem;border-bottom:1px solid rgba(212,168,67,.05);font-size:.75rem}
+.hist-date{color:var(--dim);font-size:.68rem}
+.hist-empty{color:var(--dim);text-align:center;padding:2rem;font-size:.82rem}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--gold-d)}
+
+/* ── TOAST ── */
+#toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9998;padding:.7rem 1.2rem;background:var(--bg3);border:1px solid var(--gold-d);color:var(--gold-l);font-size:.85rem;opacity:0;transition:opacity .3s;pointer-events:none}
+#toast.show{opacity:1}
+</style>
+
+<script>
+// ════════════════════════
+//  SUPABASE + TG CONFIG
+// ════════════════════════
+const SUPA_URL = 'https://psuqaatmunesexflfxte.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzdXFhYXRtdW5lc2V4ZmxmeHRlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkyODE0NjQsImV4cCI6MjA5NDg1NzQ2NH0.hj2N64RsnSLRa7IVngDP8akqBmdpA9l7owg7MRVYVvY';
+const TG_TOKEN = '8959646920:AAFwl9H1C1XzWj9oaMZrOf-ghaVV-NmL6sE';
+const TG_CHAT_ID = ''; // Fill after bot added to group
+
+async function sbGet(key) {
+  try {
+    const r = await fetch(`${SUPA_URL}/rest/v1/game_state?key=eq.${key}&select=value`, {
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+    });
+    const d = await r.json();
+    return d && d.length ? d[0].value : null;
+  } catch(e) { return null; }
+}
+
+
+async function sbDelete(key) {
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/game_state?key=eq.${key}`, {
+      method: 'DELETE',
+      headers: { 'apikey': SUPA_KEY, 'Authorization': 'Bearer ' + SUPA_KEY }
+    });
+  } catch(e) {}
+}
+
+async function sbSet(key, value) {
+  try {
+    await fetch(`${SUPA_URL}/rest/v1/game_state`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPA_KEY,
+        'Authorization': 'Bearer ' + SUPA_KEY,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({ key, value, updated_at: new Date().toISOString() })
+    });
+  } catch(e) {}
+}
+
+async function tgNotify(text) {
+  if (!TG_CHAT_ID) return;
+  try {
+    await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: TG_CHAT_ID, text, parse_mode: 'HTML' })
+    });
+  } catch(e) {}
+}
+
+// Supabase-aware wrappers
+function getState() {
+  try { return JSON.parse(localStorage.getItem('fnv_state')) || {}; } catch(e) { return {}; }
+}
+function setState(s) {
+  s._updated = Date.now(); // timestamp for cache busting
+  localStorage.setItem('fnv_state', JSON.stringify(s));
+  sbSet('fnv_state', s);
+}
+
+async function refreshFromSupabase() {
+  const keys = ['fnv_state','fnv_contracts','fnv_weekly','fnv_weekly_queue',
+                 'fnv_coins','fnv_guaranteed','fnv_prizes','fnv_weekly_bonus_enabled',
+                 'fnv_pending','fnv_hidden'];
+  for (const k of keys) {
+    try {
+      const v = await sbGet(k);
+      if (k === 'fnv_weekly_queue' && Array.isArray(v)) window._cardsCache = v;
+      if (v !== null && v !== undefined) {
+        localStorage.setItem(k, JSON.stringify(v));
+      }
+    } catch(e) {}
+  }
+}
+</script>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginWrap">
+  <div class="lcard">
+    <h1>⚙ ADMIN PANEL</h1>
+    <p>Lucky 38 — только для оператора казино</p>
+    <input class="inp" type="password" id="passInp" placeholder="••••••••">
+    <button class="lbtn" onclick="tryLogin()">ВОЙТИ</button>
+    <div class="lerr" id="lerr"></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="mainWrap">
+  <div class="topbar">
+    <h1>⚙ LUCKY 38 — ADMIN</h1>
+    <div class="topbar-right">
+      <span style="font-size:.75rem;color:var(--dim)" id="autoSaveLabel"></span>
+      <button class="logout" onclick="doLogout()">ВЫЙТИ</button>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- STATS -->
+      <div class="card">
+        <div class="card-title">📊 Статистика игрока</div>
+        <div class="stats">
+          <div class="stat"><div class="v" id="s-tickets">—</div><div class="l">БИЛЕТОВ У МОТИ</div></div>
+          <div class="stat"><div class="v" id="s-spins">—</div><div class="l">КРУТОК СЕГОДНЯ / ЛИМИТ</div></div>
+          <div class="stat"><div class="v" id="s-total">—</div><div class="l">ВСЕГО КРУТОК</div></div>
+          <div class="stat"><div class="v" id="s-last" style="font-size:1rem;padding-top:.3rem">—</div><div class="l">ПОСЛЕДНИЙ ПРИЗ</div></div>
+        </div>
+      </div>
+
+      <!-- TICKETS -->
+      <div class="card">
+        <div class="card-title">🎟️ Билеты Моти
+          <span style="font-size:.85rem;color:var(--gold-l)">Баланс: <b id="cur-tickets">—</b></span>
+        </div>
+        <div class="note">Изменения применяются мгновенно к сохранённому состоянию.</div>
+        <div class="trow">
+          <input class="tinp" type="number" id="tamount" value="5" min="0" max="9999">
+          <button class="btn btn-g" onclick="addTickets()">+ Добавить</button>
+          <button class="btn btn-r" onclick="remTickets()">− Забрать</button>
+          <button class="btn btn-o" onclick="setTickets()">= Установить</button>
+        </div>
+        <div class="trow" style="margin-top:.6rem">
+          <button class="btn btn-b" style="flex:1" onclick="resetSpins()">↺ Сбросить крутки сегодня</button>
+        </div>
+      </div>
+
+      <!-- PRIZE EDITOR -->
+      <div class="card">
+        <div class="card-title">
+          🎰 Призы и вероятности
+          <div style="display:flex;gap:.5rem">
+            <button class="btn btn-g" onclick="addPrize()" style="padding:.3rem .8rem;font-size:.75rem">+ Добавить</button>
+            <button class="btn btn-o" onclick="savePrizes()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
+          </div>
+        </div>
+
+        <div class="note">Вероятность задаётся в процентах. Сумма должна быть ровно 100%. Нули — сектор убран с колеса.</div>
+
+        <!-- Progress bar -->
+        <div class="pct-bar-wrap">
+          <div class="pct-bar-track"><div class="pct-bar-fill" id="pctFill" style="width:0%"></div></div>
+          <div class="pct-labels">
+            <span class="pct-used">Использовано: <b id="pctUsed">0</b>%</span>
+            <span id="pctStatus"></span>
+          </div>
+        </div>
+
+        <div class="pe-header" style="display:grid;grid-template-columns:1fr 90px 90px 80px 26px 36px;gap:.4rem;">
+          <span>НАЗВАНИЕ</span><span style="text-align:center">% ШАНС</span><span style="text-align:center">ТИП</span><span style="text-align:center">ЦВЕТ</span><span style="text-align:center">ℹ</span><span></span>
+        </div>
+        <div id="prizeEditor"></div>
+
+        <div style="margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap">
+          <button class="btn btn-b" onclick="autoDistribute()" style="font-size:.75rem">⚖ Распределить поровну</button>
+          <button class="btn btn-r" onclick="resetPrizes()" style="font-size:.75rem">↺ Сбросить к дефолту</button>
+        </div>
+      </div>
+
+      <!-- OWED (fnv_pending) -->
+      <div class="card">
+        <div class="card-title">📌 Невыполненные выигрыши</div>
+        <div class="note">Всё, что выпало на колесе и ещё не «отдано» — награды, наказания, тайные наказания. Одинаковые складываются (×2, ×3). «✓ Выполнено» убирает одно, 🗑 — удаляет строку целиком.</div>
+        <div id="owedList"></div>
+      </div>
+
+      <!-- HIDDEN PUNISHMENTS (fnv_hidden) -->
+      <div class="card">
+        <div class="card-title">💀 Тайные наказания
+          <div style="display:flex;gap:.5rem">
+            <button class="btn btn-g" onclick="addHidden()" style="padding:.3rem .8rem;font-size:.75rem">+ Добавить</button>
+            <button class="btn btn-o" onclick="saveHidden()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
+          </div>
+        </div>
+        <div class="note">Выбираются, когда выпадает «💀 Тайное наказание». Число — относительный вес (шанс = вес / сумма весов), до 100 добивать не нужно.</div>
+        <div id="hiddenEditor"></div>
+        <div id="hiddenSum" style="font-size:.72rem;color:var(--dim);margin-top:.4rem"></div>
+      </div>
+
+      <!-- HISTORY -->
+      <div class="card">
+        <div class="card-title">📜 История круток
+          <button class="btn btn-r" onclick="clearHistory()" style="padding:.3rem .8rem;font-size:.75rem">Очистить</button>
+        </div>
+        <div class="hist-wrap" id="histList"></div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN — wheel preview -->
+    <div>
+      <div class="card" style="position:relative">
+        <div class="card-title">🎡 Превью колеса</div>
+        <div class="wheel-preview-wrap">
+          <canvas id="previewCanvas" width="320" height="320"></canvas>
+          <div class="pct-donut-label" id="previewLabel">Сумма: 0%</div>
+          <div style="font-size:.72rem;color:var(--dim);text-align:center;max-width:280px;line-height:1.5">
+            Колесо показывает реальные сектора с учётом заданных вероятностей.<br>Серый сектор = нераспределённые %.
+          </div>
+        </div>
+      </div>
+
+
+        <!-- WEEKLY CARDS QUEUE -->
+        <div class="card" style="grid-column: 1 / -1">
+          <div class="card-title">🃏 Очередь еженедельных карточек
+            <div style="display:flex;gap:.5rem;align-items:center">
+              <span style="font-size:.72rem;color:var(--dim)" id="cardsWeekInfo"></span>
+              <button class="btn btn-o" onclick="saveCards()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
+            </div>
+          </div>
+          <!-- Weekly bonus toggle -->
+          <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:1px solid var(--border2);padding:.7rem 1rem;margin-bottom:.8rem;">
+            <div>
+              <div style="font-size:.82rem;color:var(--text);margin-bottom:.2rem">🎟️ Еженедельный бонусный билет</div>
+              <div style="font-size:.72rem;color:var(--dim)">Пользователь может получить +1 билет при открытии карточки недели</div>
+            </div>
+            <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--gold)">
+              <input type="checkbox" id="weeklyBonusEnabled" onchange="saveWeeklyBonusSetting()"
+                style="width:16px;height:16px;accent-color:var(--gold);cursor:pointer">
+              Включён
+            </label>
+            <button class="btn btn-o" onclick="resetWeeklyBonus()" 
+              style="padding:.35rem .9rem;font-size:.75rem;white-space:nowrap"
+              title="Сбросить флаг 'уже получил' — Мотя сможет забрать бонус ещё раз на этой неделе">
+              ↺ Сбросить получение
+            </button>
+          </div>
+
+          <div class="note">
+            Карточки показываются по одной каждую неделю по кругу. Первой всегда идёт карточка №1.
+            Загружай по одному файлу — картинку без текста (thumbnail) и картинку с текстом (для модального окна).
+            Можно загрузить одну и ту же картинку для обоих слотов.
+          </div>
+
+          <!-- Upload new card -->
+          <div style="background:var(--bg3);border:1px dashed var(--gold-d);padding:1rem;margin-bottom:1rem">
+            <div style="font-size:.78rem;color:var(--gold);letter-spacing:.1em;margin-bottom:.8rem">+ ДОБАВИТЬ КАРТОЧКУ</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:.6rem;align-items:end">
+              <div>
+                <div style="font-size:.68rem;color:var(--dim);margin-bottom:.3rem">НАДПИСЬ НА КАРТОЧКЕ</div>
+                <input class="inp" id="newCardQuote" type="text" placeholder="Цитата или название..." style="padding:.5rem .7rem;letter-spacing:0;text-align:left;font-size:.85rem">
+              </div>
+              <div>
+                <div style="font-size:.68rem;color:var(--dim);margin-bottom:.3rem">ИЗОБРАЖЕНИЕ (JPG/PNG)</div>
+                <input type="file" id="newCardFile" accept="image/*" style="font-family:'Share Tech Mono',monospace;font-size:.75rem;color:var(--dim);width:100%">
+              </div>
+              <button class="btn btn-g" onclick="addCard()" style="padding:.5rem 1rem;font-size:.8rem;white-space:nowrap">+ Добавить</button>
+            </div>
+          </div>
+
+          <!-- Cards list -->
+          <div id="cardsList" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-start"></div>
+        </div>
+
+
+        <!-- COINS MANAGEMENT -->
+        <div class="card">
+          <div class="card-title">💰 Яриккоины и Андрейкоины</div>
+          <div class="note">Изменения применяются сразу. 1 монета = 2 билета, 3 билета = 1 монета.</div>
+          <div style="display:grid;grid-template-columns:1fr;gap:.8rem;margin-bottom:1rem">
+            <!-- Yarik coins -->
+            <div style="background:var(--bg3);border:1px solid var(--border2);padding:.8rem">
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
+                <span style="font-size:1.4rem">🟡</span>
+                <div>
+                  <div style="font-size:.7rem;color:var(--dim);letter-spacing:.1em">ЯРИККОИНЫ</div>
+                  <div style="font-family:'Oswald',sans-serif;font-size:1.6rem;color:var(--gold-l)" id="adm-yarik">0</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.4rem">
+                <input class="tinp" type="number" id="yarik-amt" value="1" min="0" style="padding:.3rem .5rem;font-size:.85rem">
+                <button class="btn btn-g" onclick="adminAddCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">+</button>
+                <button class="btn btn-r" onclick="adminRemoveCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">−</button>
+                <button class="btn btn-o" onclick="adminSetCoins('yarik')" style="padding:.3rem .6rem;font-size:.75rem">=</button>
+              </div>
+            </div>
+            <!-- Andrei coins -->
+            <div style="background:var(--bg3);border:1px solid var(--border2);padding:.8rem">
+              <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem">
+                <span style="font-size:1.4rem">🔵</span>
+                <div>
+                  <div style="font-size:.7rem;color:var(--dim);letter-spacing:.1em">АНДРЕЙКОИНЫ</div>
+                  <div style="font-family:'Oswald',sans-serif;font-size:1.6rem;color:#5ab4e0" id="adm-andrei">0</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:.4rem">
+                <input class="tinp" type="number" id="andrei-amt" value="1" min="0" style="padding:.3rem .5rem;font-size:.85rem">
+                <button class="btn btn-g" onclick="adminAddCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">+</button>
+                <button class="btn btn-r" onclick="adminRemoveCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">−</button>
+                <button class="btn btn-o" onclick="adminSetCoins('andrei')" style="padding:.3rem .6rem;font-size:.75rem">=</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- GUARANTEED SPIN -->
+        <div class="card">
+          <div class="card-title">🎯 Гарантированный выпад
+            <span id="guaranteed-badge" style="display:none;font-size:.7rem;background:var(--red);color:#fff;padding:.15rem .5rem;letter-spacing:.05em">АКТИВНО</span>
+          </div>
+          <div class="note">При следующей крутке колесо гарантированно остановится на выбранном варианте. Потом сбросится автоматически.</div>
+          <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.7rem;flex-wrap:wrap">
+            <select id="guaranteedSelect" style="flex:1;min-width:200px;background:var(--bg3);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.82rem;padding:.5rem .7rem;outline:none">
+              <option value="">— Выбери приз —</option>
+            </select>
+            <button class="btn btn-g" onclick="setGuaranteed()" style="padding:.5rem 1rem;font-size:.82rem">✓ Установить</button>
+            <button class="btn btn-r" onclick="clearGuaranteed()" style="padding:.5rem 1rem;font-size:.82rem">✗ Сбросить</button>
+          </div>
+          <div id="guaranteed-current" style="font-size:.8rem;color:var(--dim)">Гарантированный выпад не установлен</div>
+        </div>
+
+        <!-- CONTRACTS MANAGEMENT -->
+        <div class="card" style="grid-column: 1 / -1">
+          <div class="card-title">📋 Доска контрактов
+            <div style="display:flex;gap:.5rem">
+              <button class="btn btn-g" onclick="addContract()" style="padding:.3rem .8rem;font-size:.75rem">+ Добавить</button>
+              <button class="btn btn-o" onclick="saveContracts()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
+            </div>
+          </div>
+
+          <!-- Pending confirmations -->
+          <div id="pendingSection" style="display:none;margin-bottom:1rem">
+            <div style="font-size:.75rem;color:#c0392b;letter-spacing:.1em;margin-bottom:.5rem;padding:.4rem .6rem;background:rgba(192,57,43,.1);border-left:2px solid #c0392b">
+              ⚠ ОЖИДАЮТ ПОДТВЕРЖДЕНИЯ
+            </div>
+            <div id="pendingList"></div>
+          </div>
+
+          <div class="note">Перетаскивай карточки для изменения порядка. Изменения сохрани кнопкой выше.</div>
+
+          <div id="contractEditorList" style="display:flex;flex-direction:column;gap:.5rem"></div>
+        </div>
+
+        <!-- CONTRACTS ARCHIVE -->
+        <div class="card" style="grid-column: 1 / -1">
+          <div class="card-title">📦 Архив контрактов</div>
+          <div id="contractArchiveList" style="display:flex;flex-wrap:wrap;gap:.7rem"></div>
+        </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ══════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════
+const ADMIN_PASS = 'lucky38admin'; // ← смени!
+const SK = 'fnv_state';
+const PK = 'fnv_prizes'; // stores [{text, pct, type, color}]
+
+const DEFAULT_PRIZES = [
+  {"text": "Пиво этому джентльмену !", "type": "reward", "color": "#122850", "pct": 8, "detail": "Бутылка пива от Яромира. Матвей не может его выбрасывать или избавляться, но дарить (с фотоподтверждением) можно"},
+  {"text": "Секретный подарок ", "type": "reward", "color": "#123820", "pct": 8, "detail": "Секретный цифровой подарок - пиши в беседу"},
+  {"text": "Массаж ", "type": "reward", "color": "#1e1250", "pct": 7, "detail": "Полноценный массаж спины или плеч от Андрея или Яромира"},
+  {"text": "Фигурка персонажа", "type": "reward", "color": "#122850", "pct": 4, "detail": "Изготовление кастомной фигурки, на выбор Матвея. "},
+  {"text": "Книги по психологии ", "type": "reward", "color": "#102838", "pct": 4, "detail": "Особый подарок от Андрея"},
+  {"text": "+2билета 🎟️", "type": "bonus", "color": "#0a2e0a", "pct": 11, "tickets": 2, "detail": "Бонус! На счёт зачисляются 2 дополнительных билета для будущих кручений колеса."},
+  {"text": "+10билетов 🎟️", "type": "bonus", "color": "#062006", "pct": 2, "tickets": 10, "detail": "Джекпот! Целых 10 билетов зачисляются на счёт. Редкий и ценный выигрыш."},
+  {"text": "Обзор на Культаса", "type": "penalty", "color": "#3e1010", "pct": 8, "detail": "Матвей записывает видео-обзор на видео Культаса и присылает в чат."},
+  {"text": "«Сглыпа» ", "type": "penalty", "color": "#3e1010", "pct": 8, "detail": "Матвей меняет имя во ВКонтакте на «Сглыпа» и держит не менее 7 дней. Скриншот в чат."},
+  {"text": "− 1 билет 🎟️", "type": "penalty", "color": "#2e0e0e", "pct": 11, "tickets": -1, "detail": "Невезение! С баланса списывается 1 билет."},
+  {"text": "💀 Тайное наказание 💀", "type": "skull", "color": "#0e0e0e", "pct": 6, "detail": "Колесо судьбы скрыло решение. Наказание выбирается случайно из секретного списка."},
+  {"text": "Резик на твой выбор ☣️", "type": "special", "color": "#220a30", "pct": 1, "detail": "Яромир или Андрей проходит любую часть резика по выбору Матвея"},
+  {"text": "Лицедейство", "type": "penalty", "color": "#122850", "pct": 8, "detail": "Ты меняешь аватарку тг на мем, выбранный консилиумом"},
+  {"text": "Франкфуризация", "type": "penalty", "color": "#122850", "pct": 7, "detail": "Следующие 3 дня ты заканчиваешь каждую реплику в диалоге с Яриком или Андреем на \"Мяу\", а сообщение - на \"nya~\""},
+  {"text": "АЛИСА ЗАТКНИСЬ", "type": "reward", "color": "#122850", "pct": 7, "detail": "Во время следующей нашей посиделки - у Матвея право включения музыки"},
+];
+
+const TYPE_COLORS = { reward:'#5ab4e0', bonus:'#4a8f2a', penalty:'#c0392b', skull:'#888', special:'#a855f7' };
+
+// ══════════════════════════════════════
+//  STATE & STORAGE
+// ══════════════════════════════════════
+let prizes = [];
+
+function getGameState(){ try{ return JSON.parse(localStorage.getItem(SK))||{}; }catch(e){return{};} }
+function setGameState(s){ 
+  s._updated = Date.now();
+  localStorage.setItem(SK, JSON.stringify(s)); 
+  sbSet('fnv_state', s); // sync to Supabase
+}
+function loadPrizes(){ try{ const p=JSON.parse(localStorage.getItem(PK)); return(p&&p.length)?p:JSON.parse(JSON.stringify(DEFAULT_PRIZES)); }catch(e){ return JSON.parse(JSON.stringify(DEFAULT_PRIZES)); } }
+function savePrizesToStorage(){ localStorage.setItem(PK,JSON.stringify(prizes)); sbSet("fnv_prizes", prizes); }
+
+// ══════════════════════════════════════
+//  LOGIN
+// ══════════════════════════════════════
+document.getElementById('passInp').addEventListener('keydown',e=>{ if(e.key==='Enter') tryLogin(); });
+
+// Пришли с сайта через шестерёнку — входим сразу, без повторного ввода пароля
+try {
+  if (sessionStorage.getItem('fnv_admin_ok') === ADMIN_PASS) {
+    document.getElementById('passInp').value = ADMIN_PASS;
+    setTimeout(tryLogin, 0);
+  }
+} catch(e) {}
+
+function tryLogin(){
+  if(document.getElementById('passInp').value===ADMIN_PASS){
+    document.getElementById('loginWrap').style.display='none';
+    document.getElementById('mainWrap').style.display='block';
+    try { prizes=loadPrizes(); } catch(e) { prizes=[]; }
+    init().catch(e => console.error('init error:', e));
+  } else {
+    document.getElementById('lerr').textContent='⚠ Неверный пароль';
+    setTimeout(()=>document.getElementById('lerr').textContent='',2000);
+  }
+}
+
+function doLogout(){
+  try{ sessionStorage.removeItem('fnv_admin_ok'); }catch(e){}
+  document.getElementById('loginWrap').style.display='flex';
+  document.getElementById('mainWrap').style.display='none';
+  document.getElementById('passInp').value='';
+}
+
+// ══════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════
+async function init(){
+  try {
+    // Pull fresh data from Supabase
+    await refreshFromSupabase();
+  } catch(e) {
+    console.warn('Supabase sync failed, using local data:', e);
+  }
+  try { renderStats(); } catch(e) { console.error('renderStats:', e); }
+  try { renderPrizeEditor(); } catch(e) { console.error('renderPrizeEditor:', e); }
+  try { renderHistory(); } catch(e) { console.error('renderHistory:', e); }
+  try { drawPreview(); } catch(e) { console.error('drawPreview:', e); }
+  try { renderContractsAdmin(); } catch(e) { console.error('renderContractsAdmin:', e); }
+  try { renderCardsAdmin(); } catch(e) { console.error('renderCardsAdmin:', e); }
+  try { renderCoinsAdmin(); renderGuaranteedAdmin(); } catch(e) { console.error('renderCoins:', e); }
+  try { loadWeeklyBonusSetting(); } catch(e) {}
+  try { renderOwed(); } catch(e) { console.error('renderOwed:', e); }
+  try { hiddenList = loadHidden(); renderHiddenEditor(); } catch(e) { console.error('renderHidden:', e); }
+  // Auto-refresh every 8 seconds — skip if user is typing
+  setInterval(async () => {
+    const active = document.activeElement;
+    const isTyping = active && (
+      active.tagName === 'INPUT' ||
+      active.tagName === 'TEXTAREA' ||
+      active.tagName === 'SELECT'
+    );
+    if (isTyping) return;
+
+    try {
+      await refreshFromSupabase();
+      try { await renderStats(); } catch(e) {}
+      try { renderCoinsAdmin(); } catch(e) {}
+      try { renderGuaranteedAdmin(); } catch(e) {}
+      try { renderOwed(); } catch(e) {}
+      try { renderHistory(); } catch(e) {}
+      // Contracts: only refresh pending section, not the editor (to avoid resetting inputs)
+      try {
+        const cur = localStorage.getItem(CK);
+        if (cur !== window._lastContractsJSON) { window._lastContractsJSON = cur; renderContractsAdmin(); }
+      } catch(e) {}
+    } catch(e) {}
+  }, 8000);
+}
+
+// ══════════════════════════════════════
+//  STATS
+// ══════════════════════════════════════
+async function renderStats(){
+  // Always pull fresh from Supabase before rendering
+  try {
+    const remote = await sbGet('fnv_state');
+    if (remote) localStorage.setItem('fnv_state', JSON.stringify(remote));
+  } catch(e) {}
+  const s = getGameState();
+  document.getElementById('s-tickets').textContent  = s.tickets ?? '—';
+  document.getElementById('s-spins').textContent    = `${s.spinsToday ?? 0} / 3`;
+  document.getElementById('s-total').textContent    = (s.history || []).length;
+  document.getElementById('s-last').textContent     = s.history?.[0]?.prize?.slice(0,18) ?? '—';
+  document.getElementById('cur-tickets').textContent = s.tickets ?? '—';
+}
+
+// ══════════════════════════════════════
+//  TICKET CONTROLS
+// ══════════════════════════════════════
+function addTickets(){ mutTickets(n=>n+parseInt(amt())); }
+function remTickets(){ mutTickets(n=>Math.max(0,n-parseInt(amt()))); }
+function setTickets(){ mutTickets(()=>parseInt(amt())); }
+function amt(){ return parseInt(document.getElementById('tamount').value)||0; }
+// Перед любым изменением берём свежее состояние с сервера, чтобы не затереть то, что сделал игрок
+async function freshGameState(){
+  try { const r=await sbGet(SK); if(r){ localStorage.setItem(SK,JSON.stringify(r)); return r; } } catch(e){}
+  return getGameState();
+}
+async function mutTickets(fn){ const s=await freshGameState(); s.tickets=fn(s.tickets||0); setGameState(s); renderStats(); toast('Билеты обновлены'); }
+async function resetSpins(){ const s=await freshGameState(); s.spinsToday=0; s.lastDate=''; setGameState(s); renderStats(); toast('Крутки сброшены'); }
+
+// ══════════════════════════════════════
+//  PRIZE EDITOR
+// ══════════════════════════════════════
+function renderPrizeEditor(){
+  const el=document.getElementById('prizeEditor'); el.innerHTML='';
+  prizes.forEach((p,i)=>{
+    const row=document.createElement('div');
+    row.className='prize-row';
+
+    const mainRow=document.createElement('div');
+    mainRow.className='prize-row-main';
+    mainRow.innerHTML=`
+      <input class="pe-name" value="${esc(p.text)}" placeholder="Название" onchange="prizes[${i}].text=this.value; schedulePreview()">
+      <input class="pe-pct" type="number" min="0" max="100" step="0.5" value="${p.pct}" id="pct-${i}"
+        oninput="prizes[${i}].pct=parseFloat(this.value)||0; updatePctBar(); schedulePreview()">
+      <select class="pe-type" onchange="prizes[${i}].type=this.value; schedulePreview()">
+        ${['reward','bonus','penalty','skull','special'].map(t=>`<option value="${t}"${p.type===t?' selected':''}>${t}</option>`).join('')}
+      </select>
+      <input type="color" class="pe-color" value="${p.color}" onchange="prizes[${i}].color=this.value; schedulePreview()" title="Цвет сектора">
+      <button class="pe-expand" id="expand-${i}" onclick="togglePrizeDetail(${i})" title="Описание для пользователя">▾</button>
+      <button class="pe-del" onclick="deletePrize(${i})" title="Удалить">×</button>
+    `;
+    row.appendChild(mainRow);
+
+    // Detail row (collapsible)
+    const detailRow=document.createElement('div');
+    detailRow.className='prize-detail-row';
+    detailRow.id=`detail-row-${i}`;
+    detailRow.innerHTML=`
+      <div style="flex:1">
+        <div style="font-size:.66rem;color:var(--dim);letter-spacing:.08em;margin-bottom:.3rem;">ОПИСАНИЕ ДЛЯ ПОЛЬЗОВАТЕЛЯ (показывается при выпадении)</div>
+        <textarea class="pe-detail" id="detail-${i}" placeholder="Опиши подробно что нужно сделать, условия выполнения и т.д."
+          onchange="prizes[${i}].detail=this.value">${esc(p.detail||'')}</textarea>
+        <div style="display:flex;align-items:center;gap:.5rem;margin-top:.4rem;font-size:.7rem;color:var(--dim)">
+          🎟️ Билеты при выпадении (+ даёт, − забирает, пусто = 0):
+          <input type="number" step="1" value="${p.tickets ?? ''}" style="width:70px;background:rgba(212,168,67,.06);border:1px solid var(--gold-d);color:var(--gold-l);font-family:'Share Tech Mono',monospace;padding:.2rem .3rem;text-align:center"
+            onchange="prizes[${i}].tickets=this.value===''?0:parseInt(this.value)||0">
+        </div>
+      </div>
+    `;
+    row.appendChild(detailRow);
+    el.appendChild(row);
+  });
+  updatePctBar();
+}
+
+function togglePrizeDetail(i){
+  const row=document.getElementById(`detail-row-${i}`);
+  const btn=document.getElementById(`expand-${i}`);
+  const isOpen=row.classList.toggle('open');
+  btn.classList.toggle('open', isOpen);
+  btn.textContent=isOpen?'▴':'▾';
+}
+
+function esc(s){ return s.replace(/"/g,'&quot;'); }
+
+function addPrize(){
+  prizes.push({ text:'Новый приз', type:'reward', color:'#122850', pct:0, detail:'' });
+  renderPrizeEditor(); schedulePreview();
+}
+
+function deletePrize(i){
+  prizes.splice(i,1); renderPrizeEditor(); schedulePreview();
+}
+
+function updatePctBar(){
+  const total=prizes.reduce((a,p)=>a+(parseFloat(p.pct)||0),0);
+  const pct=Math.min(total,100);
+  const fill=document.getElementById('pctFill');
+  const used=document.getElementById('pctUsed');
+  const status=document.getElementById('pctStatus');
+  fill.style.width=pct+'%';
+  used.textContent=total.toFixed(1);
+  if(Math.abs(total-100)<0.1){
+    fill.style.background='linear-gradient(90deg,#27ae60,#2ecc71)';
+    status.innerHTML='<span style="color:var(--green)">✓ Ровно 100%</span>';
+  } else if(total>100){
+    fill.style.background='linear-gradient(90deg,#c0392b,#e74c3c)';
+    status.innerHTML=`<span class="pct-warn">⚠ Перебор: +${(total-100).toFixed(1)}%</span>`;
+  } else {
+    fill.style.background='linear-gradient(90deg,#d4a843,#f5d07a)';
+    status.innerHTML=`<span class="pct-free">Свободно: ${(100-total).toFixed(1)}%</span>`;
+  }
+  // Highlight over-quota inputs
+  document.querySelectorAll('.pe-pct').forEach((inp,i)=>{
+    inp.classList.toggle('over', total>100.05);
+  });
+}
+
+function autoDistribute(){
+  if(!prizes.length) return;
+  const each=parseFloat((100/prizes.length).toFixed(2));
+  prizes.forEach(p=>p.pct=each);
+  // Fix rounding
+  const diff=parseFloat((100-each*prizes.length).toFixed(2));
+  prizes[prizes.length-1].pct=parseFloat((each+diff).toFixed(2));
+  renderPrizeEditor(); schedulePreview(); toast('Вероятности распределены поровну');
+}
+
+function resetPrizes(){
+  if(!confirm('Сбросить все призы к дефолту?')) return;
+  prizes=JSON.parse(JSON.stringify(DEFAULT_PRIZES));
+  renderPrizeEditor(); schedulePreview(); toast('Призы сброшены');
+}
+
+function savePrizes(){
+  savePrizesToStorage();
+  // Also write to game state format for index.html compatibility
+  // index.html reads PK directly if we update it
+  toast('✅ Сохранено! Обнови страницу колеса.');
+  document.getElementById('autoSaveLabel').textContent='Сохранено ✓';
+  setTimeout(()=>document.getElementById('autoSaveLabel').textContent='',3000);
+}
+
+// ══════════════════════════════════════
+//  WHEEL PREVIEW
+// ══════════════════════════════════════
+let previewTimer=null;
+function schedulePreview(){ clearTimeout(previewTimer); previewTimer=setTimeout(drawPreview,120); }
+
+function drawPreview(){
+  const canvas=document.getElementById('previewCanvas');
+  const W=canvas.width, H=canvas.height;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  const total=prizes.reduce((a,p)=>a+(parseFloat(p.pct)||0),0);
+  const cx=W/2, cy=H/2, outerR=W*.46, innerR=W*.14;
+
+  // Background
+  ctx.beginPath(); ctx.arc(cx,cy,outerR,0,Math.PI*2);
+  ctx.fillStyle='#080604'; ctx.fill();
+
+  let angle=-Math.PI/2; // start at top
+  const activePrizes=prizes.filter(p=>(parseFloat(p.pct)||0)>0);
+
+  activePrizes.forEach((p,i)=>{
+    const pct=parseFloat(p.pct)||0;
+    const sweep=(pct/Math.max(total,100))*Math.PI*2;
+    // Segment
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,outerR,angle,angle+sweep); ctx.closePath();
+    ctx.fillStyle=i%2===0?p.color:lighten(p.color,15);
+    ctx.fill();
+    ctx.strokeStyle='rgba(212,168,67,0.45)'; ctx.lineWidth=1.2; ctx.stroke();
+
+    // Label: % in middle of segment
+    if(sweep>0.15){
+      const mid=angle+sweep/2;
+      const tr=(outerR+innerR)/2+outerR*.06;
+      ctx.save();
+      ctx.translate(cx+Math.cos(mid)*tr, cy+Math.sin(mid)*tr);
+      ctx.rotate(mid+Math.PI/2);
+      const fs=Math.max(9,W*.028);
+      ctx.font=`600 ${fs}px Oswald`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='rgba(232,213,160,.9)'; ctx.shadowColor='rgba(0,0,0,.9)'; ctx.shadowBlur=4;
+      // Short name
+      const short=p.text.replace(/[\u{1F300}-\u{1FFFF}]/gu,'').trim().split(' ')[0];
+      ctx.fillText(short,0,-fs*.6);
+      ctx.font=`500 ${fs*.9}px Share Tech Mono`;
+      ctx.fillStyle='rgba(212,168,67,.85)'; ctx.shadowBlur=3;
+      ctx.fillText(`${pct}%`,0,fs*.55);
+      ctx.restore();
+    }
+    angle+=sweep;
+  });
+
+  // "Unallocated" grey wedge if total < 100
+  if(total<99.9 && total>0){
+    const rem=((100-total)/100)*Math.PI*2;
+    ctx.beginPath(); ctx.moveTo(cx,cy); ctx.arc(cx,cy,outerR,angle,angle+rem); ctx.closePath();
+    ctx.fillStyle='#1a1a1a'; ctx.fill();
+    ctx.strokeStyle='rgba(212,168,67,0.3)'; ctx.lineWidth=1; ctx.stroke();
+    if(rem>0.2){
+      const mid=angle+rem/2;
+      const tr=(outerR+innerR)/2+outerR*.04;
+      ctx.save(); ctx.translate(cx+Math.cos(mid)*tr,cy+Math.sin(mid)*tr); ctx.rotate(mid+Math.PI/2);
+      const fs=Math.max(8,W*.025);
+      ctx.font=`500 ${fs}px Share Tech Mono`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillStyle='rgba(120,110,90,.8)'; ctx.shadowBlur=0;
+      ctx.fillText(`${(100-total).toFixed(1)}%`,0,0);
+      ctx.restore();
+    }
+  } else if(total===0){
+    ctx.font=`500 ${W*.04}px Oswald`; ctx.fillStyle='rgba(120,100,60,.6)';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('Нет данных',cx,cy);
+  }
+
+  // Outer rim
+  ctx.beginPath(); ctx.arc(cx,cy,outerR,0,Math.PI*2);
+  ctx.strokeStyle='rgba(212,168,67,0.6)'; ctx.lineWidth=2.5; ctx.stroke();
+
+  // Inner hub
+  const hub=ctx.createRadialGradient(cx-innerR*.25,cy-innerR*.25,0,cx,cy,innerR);
+  hub.addColorStop(0,'#fff8d0'); hub.addColorStop(.4,'#d4a843'); hub.addColorStop(1,'#7a5510');
+  ctx.beginPath(); ctx.arc(cx,cy,innerR,0,Math.PI*2);
+  ctx.fillStyle=hub; ctx.fill();
+  ctx.strokeStyle='#8a6a1a'; ctx.lineWidth=2; ctx.stroke();
+  ctx.font=`bold ${innerR*.8}px Georgia`; ctx.fillStyle='#1a1208';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.shadowBlur=0;
+  ctx.fillText('✦',cx,cy+innerR*.06);
+
+  // Label
+  const label=document.getElementById('previewLabel');
+  if(Math.abs(total-100)<0.1){
+    label.style.color='var(--green)'; label.textContent='✓ Сумма: 100%';
+  } else if(total>100){
+    label.style.color='var(--red)'; label.textContent=`⚠ Перебор: ${total.toFixed(1)}%`;
+  } else {
+    label.style.color='var(--gold)'; label.textContent=`Сумма: ${total.toFixed(1)}% (осталось ${(100-total).toFixed(1)}%)`;
+  }
+}
+
+function lighten(hex,amt){
+  const n=parseInt(hex.replace('#',''),16);
+  const r=Math.min(255,((n>>16)&0xff)+amt);
+  const g=Math.min(255,((n>>8)&0xff)+amt);
+  const b=Math.min(255,(n&0xff)+amt);
+  return `#${((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}`;
+}
+
+// ══════════════════════════════════════
+//  HISTORY
+// ══════════════════════════════════════
+function renderHistory(){
+  const s=getGameState(); const hist=s.history||[];
+  const el=document.getElementById('histList');
+  if(!hist.length){ el.innerHTML='<div class="hist-empty">История пуста</div>'; return; }
+  el.innerHTML=hist.map((h,i)=>`
+    <div class="hist-item">
+      <div class="hist-date">#${hist.length-i} · ${h.date}</div>
+      <div>${h.prize}</div>
+    </div>`).join('');
+}
+
+function clearHistory(){
+  if(!confirm('Очистить всю историю?')) return;
+  freshGameState().then(s=>{ s.history=[]; setGameState(s); renderHistory(); renderStats(); toast('История очищена'); });
+}
+
+// ══════════════════════════════════════
+//  TOAST
+// ══════════════════════════════════════
+let toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.classList.remove('show'),2200);
+}
+
+// Auto-refresh stats every 5s (in case game is open in another tab)
+setInterval(()=>{ if(document.getElementById('mainWrap').style.display!=='none'){ renderStats(); } },5000);
+
+// ════════════════════════
+//  CONTRACTS ADMIN
+// ════════════════════════
+const CK = 'fnv_contracts';
+
+const CONTRACT_DEFAULTS = [
+  { id:'c1', title:'Пробный контракт', desc:'Зайди на сайт и покрути колесо хотя бы раз.', tickets:2, status:'open' },
+  { id:'c2', title:'Ещё один пример',  desc:'Опиши содержимое задания здесь.',             tickets:5, status:'open' },
+];
+
+function loadContracts() {
+  try {
+    const d = JSON.parse(localStorage.getItem(CK));
+    return (d && d.length) ? d : JSON.parse(JSON.stringify(CONTRACT_DEFAULTS));
+  } catch(e) { return JSON.parse(JSON.stringify(CONTRACT_DEFAULTS)); }
+}
+
+function saveContractsToStorage(arr) {
+  localStorage.setItem(CK, JSON.stringify(arr));
+  sbSet(CK, arr);
+}
+
+async function freshContracts() {
+  try { const r = await sbGet(CK); if (Array.isArray(r)) { localStorage.setItem(CK, JSON.stringify(r)); return r; } } catch(e) {}
+  return loadContracts();
+}
+
+function renderContractsAdmin() {
+  const contracts = loadContracts();
+  renderPending(contracts);
+  renderEditor(contracts);
+  renderArchiveAdmin(contracts);
+}
+
+// ── PENDING (needs confirmation) ──
+function renderPending(contracts) {
+  const pending = contracts.filter(c => c.status === 'done');
+  const sec = document.getElementById('pendingSection');
+  const list = document.getElementById('pendingList');
+  if (!pending.length) { sec.style.display = 'none'; return; }
+  sec.style.display = 'block';
+  list.innerHTML = '';
+  pending.forEach(c => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:.6rem;padding:.5rem .7rem;background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);margin-bottom:.3rem;';
+    row.innerHTML = `
+      <div style="flex:1">
+        <div style="font-size:.85rem;color:var(--text)">${c.title}</div>
+        <div style="font-size:.72rem;color:var(--dim)">Награда: ${c.tickets} 🎟️</div>
+      </div>
+      <button class="btn btn-g" style="padding:.3rem .8rem;font-size:.75rem" onclick="confirmContract('${c.id}')">✓ Подтвердить</button>
+      <button class="btn btn-r" style="padding:.3rem .8rem;font-size:.75rem" onclick="rejectContract('${c.id}')">✗ Отклонить</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+async function confirmContract(id) {
+  const contracts = await freshContracts();
+  const c = contracts.find(x => x.id === id);
+  if (!c) return;
+  // Give tickets (на свежем состоянии с сервера)
+  const s = await freshGameState();
+  s.tickets = (s.tickets || 0) + (c.tickets || 0);
+  // Add to history
+  if (!s.history) s.history = [];
+  s.history.unshift({ date: new Date().toLocaleString('ru'), prize: `Контракт: ${c.title} (+${c.tickets} 🎟️)`, type:'bonus' });
+  setState(s);
+  // Archive contract
+  c.status = 'archived';
+  c.completedDate = new Date().toLocaleString('ru');
+  saveContractsToStorage(contracts);
+  renderContractsAdmin();
+  renderStats();
+  toast(`✅ Контракт выполнен! +${c.tickets} билетов зачислено.`);
+  tgNotify(`✅ <b>Контракт подтверждён!</b>\n\n📌 <b>${c.title}</b>\n\n🎟️ +${c.tickets} билетов зачислено на счёт Моти.`);
+}
+
+
+async function resetContractStatus(id) {
+  if (!confirm('Сбросить статус контракта на "Открыт"?')) return;
+  const contracts = await freshContracts();
+  const c = contracts.find(x => x.id === id);
+  if (!c) return;
+  c.status = 'open';
+  saveContractsToStorage(contracts);
+  renderContractsAdmin();
+  toast('Статус контракта сброшен');
+}
+
+async function rejectContract(id) {
+  if (!confirm('Отклонить выполнение? Контракт вернётся в статус "принято".')) return;
+  const contracts = await freshContracts();
+  const c = contracts.find(x => x.id === id);
+  if (!c) return;
+  c.status = 'accepted';
+  saveContractsToStorage(contracts);
+  renderContractsAdmin();
+  toast('Контракт возвращён в статус «Принято»');
+}
+
+// ── EDITOR ──
+function renderEditor(contracts) {
+  const active = contracts.filter(c => c.status !== 'archived');
+  const el = document.getElementById('contractEditorList');
+  el.innerHTML = '';
+  active.forEach((c, i) => {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:grid;grid-template-columns:auto 1fr 1fr 80px 90px 36px;gap:.4rem;align-items:center;padding:.4rem .5rem;background:var(--bg3);border:1px solid var(--border2);cursor:grab;';
+    row.draggable = true;
+    row.dataset.id = c.id;
+
+    // Status badge
+    const statusColor = { open:'var(--dim)', accepted:'var(--red)', done:'var(--green)', archived:'#555' };
+    const statusLabel = { open:'Открыт', accepted:'Принято', done:'На проверке', archived:'Архив' };
+
+    row.innerHTML = `
+      <span style="color:var(--dim2);font-size:1rem;cursor:grab;padding:0 .3rem" title="Перетащи для сортировки">⠿</span>
+      <input class="pe-name" value="${c.title.replace(/"/g,'&quot;')}" placeholder="Название"
+        onchange="updateContract('${c.id}','title',this.value)" style="min-width:0">
+      <input class="pe-name" value="${c.desc.replace(/"/g,'&quot;')}" placeholder="Описание задания"
+        onchange="updateContract('${c.id}','desc',this.value)" style="min-width:0;font-size:.72rem">
+      <input class="tinp" type="number" min="1" max="999" value="${c.tickets}" title="Билетов за выполнение"
+        onchange="updateContract('${c.id}','tickets',parseInt(this.value)||1)" style="padding:.3rem .5rem;font-size:.85rem">
+      <div style="display:flex;flex-direction:column;gap:.2rem;align-items:flex-start">
+        <span style="font-size:.68rem;color:${statusColor[c.status] || 'var(--dim)'};letter-spacing:.05em">${statusLabel[c.status] || c.status}</span>
+        ${c.status !== 'open' && c.status !== 'archived' ? `<button onclick="resetContractStatus('${c.id}')" style="font-size:.62rem;padding:.1rem .35rem;background:rgba(212,168,67,.1);border:1px solid rgba(212,168,67,.3);color:var(--gold-d);cursor:pointer;font-family:'Share Tech Mono',monospace;" title="Сбросить статус">↺ сброс</button>` : ''}
+      </div>
+      <button class="pe-del" onclick="deleteContract('${c.id}')" title="Удалить">×</button>
+    `;
+
+    // Drag-and-drop
+    row.addEventListener('dragstart', e => { e.dataTransfer.setData('text/plain', c.id); row.style.opacity='.4'; });
+    row.addEventListener('dragend',   () => row.style.opacity='1');
+    row.addEventListener('dragover',  e => { e.preventDefault(); row.style.borderColor='var(--gold)'; });
+    row.addEventListener('dragleave', () => row.style.borderColor='var(--border2)');
+    row.addEventListener('drop', async e => {
+      e.preventDefault(); row.style.borderColor='var(--border2)';
+      const fromId = e.dataTransfer.getData('text/plain');
+      const contracts2 = await freshContracts();
+      const fromIdx = contracts2.findIndex(x => x.id === fromId);
+      const toIdx   = contracts2.findIndex(x => x.id === c.id);
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const [item] = contracts2.splice(fromIdx, 1);
+        contracts2.splice(toIdx, 0, item);
+        saveContractsToStorage(contracts2);
+        renderContractsAdmin();
+      }
+    });
+
+    el.appendChild(row);
+  });
+
+  // Column headers
+  const hdr = document.createElement('div');
+  hdr.style.cssText = 'display:grid;grid-template-columns:auto 1fr 1fr 80px 90px 36px;gap:.4rem;font-size:.68rem;color:var(--dim);letter-spacing:.08em;padding:0 .5rem .3rem;border-bottom:1px solid var(--border2);margin-bottom:.3rem;';
+  hdr.innerHTML = '<span></span><span>НАЗВАНИЕ</span><span>ОПИСАНИЕ</span><span style="text-align:center">БИЛЕТЫ</span><span style="text-align:center">СТАТУС</span><span></span>';
+  el.prepend(hdr);
+}
+
+async function updateContract(id, field, value) {
+  const contracts = await freshContracts();
+  const c = contracts.find(x => x.id === id);
+  if (c) { c[field] = value; saveContractsToStorage(contracts); }
+}
+
+async function addContract() {
+  const contracts = await freshContracts();
+  contracts.push({
+    id: 'c' + Date.now(),
+    title: 'Новое задание',
+    desc: 'Описание задания',
+    tickets: 5,
+    status: 'open'
+  });
+  saveContractsToStorage(contracts);
+  renderContractsAdmin();
+  toast('Контракт добавлен');
+}
+
+async function deleteContract(id) {
+  if (!confirm('Удалить контракт?')) return;
+  const contracts = (await freshContracts()).filter(c => c.id !== id);
+  saveContractsToStorage(contracts);
+  renderContractsAdmin();
+  toast('Контракт удалён');
+}
+
+function saveContracts() {
+  // Already saving on every change, this just confirms
+  toast('✅ Контракты сохранены! Обнови страницу сайта.');
+}
+
+// ── ARCHIVE ──
+function renderArchiveAdmin(contracts) {
+  const archived = contracts.filter(c => c.status === 'archived');
+  const el = document.getElementById('contractArchiveList');
+  if (!archived.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-size:.8rem;padding:.5rem">Архив пуст</div>';
+    return;
+  }
+  el.innerHTML = '';
+  archived.forEach(c => {
+    const item = document.createElement('div');
+    item.style.cssText = 'background:var(--bg3);border:1px solid var(--border2);padding:.6rem .8rem;font-size:.78rem;min-width:200px;max-width:280px;';
+    item.innerHTML = `
+      <div style="color:var(--green);font-size:.7rem;margin-bottom:.2rem">✓ ВЫПОЛНЕН · ${c.completedDate || '—'}</div>
+      <div style="color:var(--text);font-weight:bold">${c.title}</div>
+      <div style="color:var(--dim);margin-top:.2rem">${c.desc.slice(0,80)}${c.desc.length>80?'…':''}</div>
+      <div style="color:var(--gold);margin-top:.3rem">+${c.tickets} 🎟️</div>
+    `;
+    el.appendChild(item);
+  });
+}
+
+
+// ════════════════════════
+//  WEEKLY CARDS ADMIN
+// ════════════════════════
+const CARDS_KEY   = 'fnv_weekly_queue'; // общая очередь (раньше — локальная копия, из-за чего новая карточка затирала все старые)
+const WEEKLY_KEY  = 'fnv_weekly';
+
+function loadCards() {
+  if (Array.isArray(window._cardsCache)) return window._cardsCache;
+  try {
+    const d = JSON.parse(localStorage.getItem(CARDS_KEY));
+    return d && d.length ? d : [];
+  } catch(e) { return []; }
+}
+
+function saveCardsToStorage(cards) {
+  try { localStorage.setItem(CARDS_KEY, JSON.stringify(cards)); } catch(e) { console.warn('cards too big for localStorage', e); }
+  window._cardsCache = cards;
+}
+
+function getWeekNumber() {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), 0, 1);
+  return Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000));
+}
+
+function renderCardsAdmin() {
+  const cards   = loadCards();
+  const week    = getWeekNumber();
+  const curIdx  = cards.length ? week % cards.length : 0;
+  const ws      = JSON.parse(localStorage.getItem(WEEKLY_KEY) || '{}');
+
+  document.getElementById('cardsWeekInfo').textContent =
+    cards.length ? `Неделя ${week} · сейчас карточка ${curIdx + 1} из ${cards.length}` : 'Нет карточек';
+
+  const el = document.getElementById('cardsList');
+  el.innerHTML = '';
+
+  if (!cards.length) {
+    el.innerHTML = '<div style="color:var(--dim);font-size:.8rem">Очередь пуста. Добавь первую карточку.</div>';
+    return;
+  }
+
+  cards.forEach((c, i) => {
+    const isCurrent = i === curIdx;
+    const claimed   = ws[`claimed_${new Date().getFullYear()}_${week}`];
+    const card = document.createElement('div');
+    card.style.cssText = `
+      position:relative;width:160px;background:var(--bg3);
+      border:2px solid ${isCurrent ? 'var(--gold)' : 'var(--border2)'};
+      padding:.6rem;transition:border-color .2s;
+    `;
+
+    // Week badge
+    if (isCurrent) {
+      const badge = document.createElement('div');
+      badge.style.cssText = 'position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:var(--gold);color:#0a0804;font-family:Oswald,sans-serif;font-size:.65rem;font-weight:700;letter-spacing:.1em;padding:.15rem .6rem;white-space:nowrap;';
+      badge.textContent = '▶ СЕЙЧАС';
+      card.appendChild(badge);
+    }
+
+    // Image preview
+    const img = document.createElement('img');
+    img.src = c.img;
+    img.style.cssText = 'width:100%;border-radius:3px;display:block;margin-bottom:.5rem;';
+    card.appendChild(img);
+
+    // Quote
+    const q = document.createElement('div');
+    q.style.cssText = 'font-size:.72rem;color:var(--text);margin-bottom:.4rem;line-height:1.4;';
+    q.textContent = c.quote || '—';
+    card.appendChild(q);
+
+    // Status
+    if (isCurrent) {
+      const st = document.createElement('div');
+      st.style.cssText = `font-size:.68rem;color:${claimed ? 'var(--green)' : 'var(--dim)'};margin-bottom:.4rem;`;
+      st.textContent = claimed ? '✓ Бонус получен' : '○ Бонус не забран';
+      card.appendChild(st);
+    }
+
+    // Card number
+    const num = document.createElement('div');
+    num.style.cssText = 'font-size:.65rem;color:var(--dim2);margin-bottom:.5rem;';
+    num.textContent = `Карточка #${i + 1}`;
+    card.appendChild(num);
+
+    // Controls row
+    const btns = document.createElement('div');
+    btns.style.cssText = 'display:flex;gap:.3rem;';
+
+    if (i > 0) {
+      const up = document.createElement('button');
+      up.className = 'btn btn-b'; up.style.cssText = 'padding:.2rem .4rem;font-size:.7rem;flex:1';
+      up.textContent = '↑'; up.title = 'Вверх';
+      up.onclick = () => { moveCard(i, -1); };
+      btns.appendChild(up);
+    }
+    if (i < cards.length - 1) {
+      const dn = document.createElement('button');
+      dn.className = 'btn btn-b'; dn.style.cssText = 'padding:.2rem .4rem;font-size:.7rem;flex:1';
+      dn.textContent = '↓'; dn.title = 'Вниз';
+      dn.onclick = () => { moveCard(i, 1); };
+      btns.appendChild(dn);
+    }
+
+    const del = document.createElement('button');
+    del.className = 'btn btn-r'; del.style.cssText = 'padding:.2rem .4rem;font-size:.7rem;flex:1';
+    del.textContent = '×'; del.title = 'Удалить';
+    del.onclick = () => { deleteCard(i); };
+    btns.appendChild(del);
+
+    card.appendChild(btns);
+    el.appendChild(card);
+  });
+}
+
+function addCard() {
+  const quote = document.getElementById('newCardQuote').value.trim();
+  const fileInput = document.getElementById('newCardFile');
+  if (!fileInput.files.length) { toast('⚠ Выбери изображение'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const cards = loadCards();
+    cards.push({ quote, img: e.target.result });
+    saveCardsToStorage(cards);
+    // Also update game storage so index.html picks it up
+    syncCardsToGame(cards);
+    renderCardsAdmin();
+    // Reset inputs
+    document.getElementById('newCardQuote').value = '';
+    fileInput.value = '';
+    toast('✅ Карточка добавлена!');
+  };
+  reader.readAsDataURL(fileInput.files[0]);
+}
+
+function deleteCard(i) {
+  if (!confirm('Удалить карточку?')) return;
+  const cards = loadCards();
+  cards.splice(i, 1);
+  saveCardsToStorage(cards);
+  syncCardsToGame(cards);
+  renderCardsAdmin();
+  toast('Карточка удалена');
+}
+
+function moveCard(i, dir) {
+  const cards = loadCards();
+  const j = i + dir;
+  if (j < 0 || j >= cards.length) return;
+  [cards[i], cards[j]] = [cards[j], cards[i]];
+  saveCardsToStorage(cards);
+  syncCardsToGame(cards);
+  renderCardsAdmin();
+}
+
+function syncCardsToGame(cards) {
+  saveCardsToStorage(cards);
+  sbSet('fnv_weekly_queue', cards);
+}
+
+function saveCards() {
+  const cards = loadCards();
+  syncCardsToGame(cards);
+  toast('✅ Карточки сохранены!');
+}
+
+
+// ════════════════════════
+//  COINS ADMIN
+// ════════════════════════
+const COINS_KEY = 'fnv_coins';
+const GUARANTEED_KEY = 'fnv_guaranteed';
+
+function loadCoinsAdmin() {
+  try { return JSON.parse(localStorage.getItem(COINS_KEY)) || { yarik:0, andrei:0 }; } catch(e) { return { yarik:0, andrei:0 }; }
+}
+function saveCoinsAdmin(coins) {
+  localStorage.setItem(COINS_KEY, JSON.stringify(coins));
+  sbSet(COINS_KEY, coins);
+}
+
+function renderCoinsAdmin() {
+  const coins = loadCoinsAdmin();
+  const ey = document.getElementById('adm-yarik');
+  const ea = document.getElementById('adm-andrei');
+  if (ey) ey.textContent = coins.yarik;
+  if (ea) ea.textContent = coins.andrei;
+}
+
+async function freshCoins() {
+  try { const r = await sbGet(COINS_KEY); if (r) { localStorage.setItem(COINS_KEY, JSON.stringify(r)); return r; } } catch(e) {}
+  return loadCoinsAdmin();
+}
+async function adminAddCoins(type) {
+  const amt = parseInt(document.getElementById(type+'-amt').value) || 0;
+  const coins = await freshCoins();
+  if (type === 'yarik') coins.yarik  = Math.max(0, coins.yarik  + amt);
+  else                   coins.andrei = Math.max(0, coins.andrei + amt);
+  saveCoinsAdmin(coins); renderCoinsAdmin(); toast(`+${amt} ${type==='yarik'?'Яриккоин':'Андрейкоин'}`);
+}
+async function adminRemoveCoins(type) {
+  const amt = parseInt(document.getElementById(type+'-amt').value) || 0;
+  const coins = await freshCoins();
+  if (type === 'yarik') coins.yarik  = Math.max(0, coins.yarik  - amt);
+  else                   coins.andrei = Math.max(0, coins.andrei - amt);
+  saveCoinsAdmin(coins); renderCoinsAdmin(); toast(`−${amt} ${type==='yarik'?'Яриккоин':'Андрейкоин'}`);
+}
+function adminSetCoins(type) {
+  const amt = parseInt(document.getElementById(type+'-amt').value) || 0;
+  const coins = loadCoinsAdmin();
+  if (type === 'yarik') coins.yarik  = amt;
+  else                   coins.andrei = amt;
+  saveCoinsAdmin(coins); renderCoinsAdmin(); toast('Баланс обновлён');
+}
+
+// ════════════════════════
+//  GUARANTEED SPIN ADMIN
+// ════════════════════════
+function renderGuaranteedAdmin() {
+  // Populate select with current prizes
+  const prizes = loadPrizes();
+  const sel = document.getElementById('guaranteedSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Выбери приз —</option>';
+  prizes.forEach((p, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${i+1}. ${p.text}`;
+    sel.appendChild(opt);
+  });
+
+  // Show current guaranteed
+  try {
+    const g = JSON.parse(localStorage.getItem(GUARANTEED_KEY));
+    const badge = document.getElementById('guaranteed-badge');
+    const cur   = document.getElementById('guaranteed-current');
+    if (g !== null && g !== undefined && g !== 'null') {
+      const p = prizes[g];
+      badge.style.display = 'inline';
+      cur.style.color = 'var(--red)';
+      cur.textContent = `⚠ Активно: при следующей крутке выпадет "${p ? p.text : '?'}"`;
+      sel.value = g;
+    } else {
+      badge.style.display = 'none';
+      cur.style.color = 'var(--dim)';
+      cur.textContent = 'Гарантированный выпад не установлен';
+    }
+  } catch(e) {}
+}
+
+function setGuaranteed() {
+  const sel = document.getElementById('guaranteedSelect');
+  const idx = sel.value;
+  if (idx === '') { toast('⚠ Выбери приз'); return; }
+  localStorage.setItem(GUARANTEED_KEY, JSON.stringify(parseInt(idx)));
+  sbSet(GUARANTEED_KEY, parseInt(idx));
+  renderGuaranteedAdmin();
+  const prizes = loadPrizes();
+  toast(`✅ Гарантированно выпадет: "${prizes[idx].text}"`);
+}
+
+function clearGuaranteed() {
+  localStorage.removeItem(GUARANTEED_KEY);
+  sbDelete(GUARANTEED_KEY); // DELETE the row entirely
+  renderGuaranteedAdmin();
+  toast('Гарантированный выпад сброшен');
+}
+
+
+// ════════════════════════
+//  WEEKLY BONUS TOGGLE
+// ════════════════════════
+const WEEKLY_BONUS_KEY = 'fnv_weekly_bonus_enabled';
+
+function saveWeeklyBonusSetting() {
+  const enabled = document.getElementById('weeklyBonusEnabled').checked;
+  localStorage.setItem(WEEKLY_BONUS_KEY, JSON.stringify(enabled));
+  sbSet(WEEKLY_BONUS_KEY, enabled);
+  toast(enabled ? '✅ Еженедельный бонус включён' : 'Еженедельный бонус отключён');
+}
+
+function loadWeeklyBonusSetting() {
+  try {
+    const v = localStorage.getItem(WEEKLY_BONUS_KEY);
+    // Default: enabled (true)
+    const enabled = v === null ? true : JSON.parse(v);
+    const cb = document.getElementById('weeklyBonusEnabled');
+    if (cb) cb.checked = enabled;
+  } catch(e) {}
+}
+
+
+function resetWeeklyBonus() {
+  // Clear the 'claimed this week' flag from Supabase
+  sbGet('fnv_weekly').then(ws => {
+    if (!ws) ws = {};
+    // Get current week number
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 1);
+    const week = Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000));
+    // Remove claimed flag for this week
+    delete ws[`claimed_${now.getFullYear()}_${week}`];
+    localStorage.setItem('fnv_weekly', JSON.stringify(ws));
+    sbSet('fnv_weekly', ws);
+    toast('✅ Бонус сброшен — Мотя может получить билет снова!');
+  }).catch(() => {
+    toast('⚠ Ошибка при сбросе');
+  });
+}
+
+// ════════════════════════
+//  OWED WINNINGS (fnv_pending)
+// ════════════════════════
+const OWED_KEY = 'fnv_pending';
+function loadOwed(){ try{ return JSON.parse(localStorage.getItem(OWED_KEY))||[]; }catch(e){ return []; } }
+async function freshOwed(){
+  try{ const r=await sbGet(OWED_KEY); if(Array.isArray(r)){ localStorage.setItem(OWED_KEY,JSON.stringify(r)); return r; } }catch(e){}
+  return loadOwed();
+}
+function saveOwed(list){ localStorage.setItem(OWED_KEY,JSON.stringify(list)); sbSet(OWED_KEY,list); }
+function renderOwed(){
+  const el=document.getElementById('owedList'); if(!el) return;
+  const list=loadOwed();
+  if(!list.length){ el.innerHTML='<div class="hist-empty" style="padding:1rem">Долгов нет 🎉</div>'; return; }
+  el.innerHTML='';
+  list.forEach(o=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;background:var(--bg3);border:1px solid var(--border2);margin-bottom:.3rem';
+    const info=document.createElement('div'); info.style.flex='1';
+    const t=document.createElement('div'); t.style.cssText='font-size:.82rem;color:var(--text)';
+    t.textContent=o.text+((o.count||1)>1?`  ×${o.count}`:'');
+    const d=document.createElement('div'); d.style.cssText='font-size:.66rem;color:var(--dim)';
+    d.innerHTML=`<span class="badge badge-${o.type}">${o.type}</span> впервые: ${o.date||'—'}`;
+    info.appendChild(t); info.appendChild(d); row.appendChild(info);
+    const ok=document.createElement('button'); ok.className='btn btn-g'; ok.style.cssText='padding:.3rem .7rem;font-size:.72rem';
+    ok.textContent='✓ Выполнено'; ok.onclick=()=>owedDone(o.id); row.appendChild(ok);
+    const del=document.createElement('button'); del.className='pe-del'; del.textContent='🗑'; del.title='Удалить строку';
+    del.onclick=()=>owedDelete(o.id); row.appendChild(del);
+    el.appendChild(row);
+  });
+}
+async function owedDone(id){
+  const list=await freshOwed(); const o=list.find(x=>x.id===id); if(!o) return;
+  o.count=(o.count||1)-1;
+  const out=o.count>0?list:list.filter(x=>x.id!==id);
+  saveOwed(out); renderOwed(); toast(`✓ «${o.text}» — выполнено`);
+}
+async function owedDelete(id){
+  if(!confirm('Удалить эту строку целиком?')) return;
+  const list=(await freshOwed()).filter(x=>x.id!==id);
+  saveOwed(list); renderOwed(); toast('Удалено');
+}
+
+// ════════════════════════
+//  HIDDEN PUNISHMENTS (fnv_hidden)
+// ════════════════════════
+const HIDDEN_KEY = 'fnv_hidden';
+let hiddenList = [];
+function loadHidden(){ try{ const h=JSON.parse(localStorage.getItem(HIDDEN_KEY)); return Array.isArray(h)?h:[]; }catch(e){ return []; } }
+function renderHiddenEditor(){
+  const el=document.getElementById('hiddenEditor'); if(!el) return;
+  el.innerHTML='';
+  hiddenList.forEach((h,i)=>{
+    const row=document.createElement('div');
+    row.style.cssText='display:grid;grid-template-columns:1fr 70px 32px;gap:.4rem;align-items:center;padding:.3rem .4rem;background:var(--bg3);margin-bottom:.3rem';
+    row.innerHTML=`<input class="pe-name" value="${esc(h.text||'')}" onchange="hiddenList[${i}].text=this.value">
+      <input class="pe-pct" type="number" min="0" step="1" value="${h.pct??1}" oninput="hiddenList[${i}].pct=parseFloat(this.value)||0; updateHiddenSum()">
+      <button class="pe-del" onclick="hiddenList.splice(${i},1); renderHiddenEditor()">×</button>`;
+    el.appendChild(row);
+  });
+  updateHiddenSum();
+}
+function updateHiddenSum(){
+  const total=hiddenList.reduce((a,h)=>a+(parseFloat(h.pct)||0),0);
+  const el=document.getElementById('hiddenSum'); if(!el) return;
+  el.innerHTML=hiddenList.length?hiddenList.map(h=>`${(h.text||'').slice(0,28)} — <b style="color:var(--gold-l)">${total?((parseFloat(h.pct)||0)/total*100).toFixed(0):0}%</b>`).join('<br>'):'Список пуст — будет использоваться встроенный.';
+}
+function addHidden(){ hiddenList.push({text:'Новое тайное наказание',pct:10}); renderHiddenEditor(); }
+function saveHidden(){
+  const clean=hiddenList.filter(h=>(h.text||'').trim()).map(h=>({text:h.text.trim(),pct:parseFloat(h.pct)||0}));
+  hiddenList=clean; localStorage.setItem(HIDDEN_KEY,JSON.stringify(clean)); sbSet(HIDDEN_KEY,clean);
+  renderHiddenEditor(); toast('✅ Тайные наказания сохранены');
+}
+
+</script>
+</body>
+</html>
