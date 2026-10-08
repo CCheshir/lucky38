@@ -337,6 +337,12 @@ async function refreshFromSupabase() {
         <div class="card-title">📌 Невыполненные выигрыши</div>
         <div class="note">Всё, что выпало на колесе и ещё не «отдано» — награды, наказания, тайные наказания. Одинаковые складываются (×2, ×3). «✓ Выполнено» убирает одно, 🗑 — удаляет строку целиком.</div>
         <div id="owedList"></div>
+        <div style="display:grid;grid-template-columns:1fr 130px 56px auto;gap:.4rem;margin-top:.6rem;align-items:center">
+          <input id="owedNewText" class="pe-name" placeholder="Добавить вручную: что Мотя должен / что должны Моте…" style="border:1px solid var(--border2)">
+          <select id="owedNewType" class="pe-type"><option value="reward">🎁 Награда</option><option value="penalty" selected>⚠️ Наказание</option><option value="special">☣️ Особое</option><option value="skull">💀 Тайное</option></select>
+          <input id="owedNewCount" type="number" min="1" value="1" title="Сколько раз" style="width:100%;text-align:center;background:rgba(212,168,67,.06);border:1px solid var(--gold-d);color:var(--gold-l);font-family:'Share Tech Mono',monospace;padding:.35rem .2rem">
+          <button class="btn btn-g" onclick="owedAdd()" style="padding:.35rem .8rem;font-size:.75rem">+ Добавить</button>
+        </div>
       </div>
 
       <!-- HIDDEN PUNISHMENTS (fnv_hidden) -->
@@ -501,6 +507,7 @@ async function refreshFromSupabase() {
             <div>
               <div style="font-size:.82rem;color:var(--text);margin-bottom:.2rem">🎟️ Еженедельный бонусный билет</div>
               <div style="font-size:.72rem;color:var(--dim)">Пользователь может получить +1 билет при открытии карточки недели</div>
+              <div id="weeklyStatus" style="font-size:.78rem;margin-top:.35rem"></div>
             </div>
             <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer;font-family:'Share Tech Mono',monospace;font-size:.8rem;color:var(--gold)">
               <input type="checkbox" id="weeklyBonusEnabled" onchange="saveWeeklyBonusSetting()"
@@ -638,7 +645,7 @@ async function init(){
   try { renderContractsAdmin(); } catch(e) { console.error('renderContractsAdmin:', e); }
   try { renderCardsAdmin(); } catch(e) { console.error('renderCardsAdmin:', e); }
   try { renderCoinsAdmin(); renderGuaranteedAdmin(); } catch(e) { console.error('renderCoins:', e); }
-  try { loadWeeklyBonusSetting(); } catch(e) {}
+  try { loadWeeklyBonusSetting(); renderWeeklyStatus(); } catch(e) {}
   try { renderOwed(); } catch(e) { console.error('renderOwed:', e); }
   try { hiddenList = loadHidden(); renderHiddenEditor(); } catch(e) { console.error('renderHidden:', e); }
   try { await initNotes(); } catch(e) { console.error('notes:', e); }
@@ -660,6 +667,7 @@ async function init(){
       try { renderOwed(); } catch(e) {}
       try { renderHistory(); } catch(e) {}
       try { syncNotesFromStorage(); } catch(e) {}
+      try { renderWeeklyStatus(); } catch(e) {}
       try {
         const st = localStorage.getItem(STRUCK_KEY);
         if (st !== window._lastStruckJSON) { window._lastStruckJSON = st; renderPrizeEditor(); renderHiddenEditor(); drawPreview(); renderGuaranteedAdmin(); }
@@ -1484,6 +1492,19 @@ function saveWeeklyBonusSetting() {
   toast(enabled ? '✅ Еженедельный бонус включён' : 'Еженедельный бонус отключён');
 }
 
+function renderWeeklyStatus() {
+  const el = document.getElementById('weeklyStatus'); if (!el) return;
+  let ws = {}; try { ws = JSON.parse(localStorage.getItem('fnv_weekly')) || {}; } catch(e) {}
+  const now = new Date(), week = getWeekNumber();
+  const got = !!ws[`claimed_${now.getFullYear()}_${week}`];
+  // даты текущей «недели» (считается от 1 января)
+  const start = new Date(now.getFullYear(), 0, 1 + week * 7), end = new Date(start); end.setDate(end.getDate() + 6);
+  const f = d => d.toLocaleDateString('ru', {day:'numeric', month:'short'});
+  el.innerHTML = got
+    ? `<span style="color:var(--green)">✓ На этой неделе (${f(start)} – ${f(end)}) билет получен</span>`
+    : `<span style="color:#e0a040">○ На этой неделе (${f(start)} – ${f(end)}) билет ещё не забран</span>`;
+}
+
 function loadWeeklyBonusSetting() {
   try {
     const v = localStorage.getItem(WEEKLY_BONUS_KEY);
@@ -1507,6 +1528,7 @@ function resetWeeklyBonus() {
     delete ws[`claimed_${now.getFullYear()}_${week}`];
     localStorage.setItem('fnv_weekly', JSON.stringify(ws));
     sbSet('fnv_weekly', ws);
+    renderWeeklyStatus();
     toast('✅ Бонус сброшен — Мотя может получить билет снова!');
   }).catch(() => {
     toast('⚠ Ошибка при сбросе');
@@ -1523,6 +1545,7 @@ async function freshOwed(){
   return loadOwed();
 }
 function saveOwed(list){ localStorage.setItem(OWED_KEY,JSON.stringify(list)); sbSet(OWED_KEY,list); }
+const OWED_TYPES={reward:'🎁 Награда',penalty:'⚠️ Наказание',special:'☣️ Особое',skull:'💀 Тайное'};
 function renderOwed(){
   const el=document.getElementById('owedList'); if(!el) return;
   const list=loadOwed();
@@ -1530,25 +1553,53 @@ function renderOwed(){
   el.innerHTML='';
   list.forEach(o=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:.6rem;padding:.45rem .6rem;background:var(--bg3);border:1px solid var(--border2);margin-bottom:.3rem';
-    const info=document.createElement('div'); info.style.flex='1';
-    const t=document.createElement('div'); t.style.cssText='font-size:.82rem;color:var(--text)';
-    t.textContent=o.text+((o.count||1)>1?`  ×${o.count}`:'');
+    row.style.cssText='display:flex;align-items:center;gap:.5rem;padding:.45rem .6rem;background:var(--bg3);border:1px solid var(--border2);margin-bottom:.3rem;flex-wrap:wrap';
+    const info=document.createElement('div'); info.style.cssText='flex:1;min-width:160px';
+    const t=document.createElement('div'); t.style.cssText='font-size:.82rem;color:var(--text)'; t.textContent=o.text;
     const d=document.createElement('div'); d.style.cssText='font-size:.66rem;color:var(--dim)';
-    d.innerHTML=`<span class="badge badge-${o.type}">${o.type}</span> впервые: ${o.date||'—'}`;
+    d.innerHTML=`<span class="badge badge-${o.type}">${(OWED_TYPES[o.type]||o.type).replace(/^\S+\s/,'')}</span> ${o.manual?'добавлено вручную':'впервые'}: ${o.date||'—'}`;
     info.appendChild(t); info.appendChild(d); row.appendChild(info);
+    // счётчик
+    const cnt=document.createElement('div'); cnt.style.cssText='display:flex;align-items:center;gap:.2rem';
+    cnt.innerHTML=`<button class="mini-btn" title="Меньше">−</button>
+      <input type="number" min="0" value="${o.count||1}" title="Сколько раз" style="width:46px;text-align:center;background:rgba(212,168,67,.06);border:1px solid var(--gold-d);color:var(--gold-l);font-family:'Share Tech Mono',monospace;padding:.15rem">
+      <button class="mini-btn" title="Больше">+</button>`;
+    const [minus,inp,plus]=cnt.children;
+    minus.onclick=()=>owedSetCount(o.id,(o.count||1)-1);
+    plus.onclick=()=>owedSetCount(o.id,(o.count||1)+1);
+    inp.onchange=()=>owedSetCount(o.id,parseInt(inp.value)||0);
+    row.appendChild(cnt);
     const ok=document.createElement('button'); ok.className='btn btn-g'; ok.style.cssText='padding:.3rem .7rem;font-size:.72rem';
-    ok.textContent='✓ Выполнено'; ok.onclick=()=>owedDone(o.id); row.appendChild(ok);
+    ok.textContent='✓ Выполнено'; ok.title='Убрать одно'; ok.onclick=()=>owedDone(o.id); row.appendChild(ok);
     const del=document.createElement('button'); del.className='pe-del'; del.textContent='🗑'; del.title='Удалить строку';
     del.onclick=()=>owedDelete(o.id); row.appendChild(del);
     el.appendChild(row);
   });
 }
+async function owedSetCount(id,n){
+  const list=await freshOwed(); const o=list.find(x=>x.id===id); if(!o) return;
+  if(n<=0){ if(!confirm(`Счётчик станет 0 — убрать «${o.text}» из списка?`)){ renderOwed(); return; } saveOwed(list.filter(x=>x.id!==id)); }
+  else { o.count=n; saveOwed(list); }
+  renderOwed(); renderStats();
+}
+async function owedAdd(){
+  const text=document.getElementById('owedNewText').value.trim();
+  const type=document.getElementById('owedNewType').value;
+  const count=Math.max(1,parseInt(document.getElementById('owedNewCount').value)||1);
+  if(!text){ toast('⚠ Введи название'); return; }
+  const list=await freshOwed();
+  const ex=list.find(x=>x.text===text);
+  if(ex) ex.count=(ex.count||1)+count;
+  else list.push({id:Date.now(),date:new Date().toLocaleString('ru'),text,type,count,manual:true});
+  saveOwed(list); renderOwed(); renderStats();
+  document.getElementById('owedNewText').value=''; document.getElementById('owedNewCount').value='1';
+  toast('📌 Добавлено в невыполненные');
+}
 async function owedDone(id){
   const list=await freshOwed(); const o=list.find(x=>x.id===id); if(!o) return;
   o.count=(o.count||1)-1;
   const out=o.count>0?list:list.filter(x=>x.id!==id);
-  saveOwed(out); renderOwed(); toast(`✓ «${o.text}» — выполнено`);
+  saveOwed(out); renderOwed(); renderStats(); toast(`✓ «${o.text}» — выполнено`);
 }
 async function owedDelete(id){
   if(!confirm('Удалить эту строку целиком?')) return;

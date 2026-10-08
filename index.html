@@ -103,6 +103,26 @@ canvas#wheelCanvas{width:100%;height:100%;display:block;border-radius:50%;backgr
 .spin-status{margin-top:.6rem;font-family:'Share Tech Mono',monospace;font-size:.82rem;color:var(--dim);letter-spacing:.06em}
 .spin-status.warn{color:#c9783a}
 
+
+/* ── «Невыполненное» ── */
+.debts-btn{display:inline-flex;align-items:center;gap:.5rem;margin-top:.8rem;font-family:'Oswald',sans-serif;font-size:.85rem;letter-spacing:.15em;text-transform:uppercase;padding:.45rem 1.1rem;background:rgba(0,0,0,.5);border:1px solid var(--gold-d);color:var(--gold);cursor:pointer;transition:all .2s}
+.debts-btn:hover{border-color:var(--gold);background:rgba(212,168,67,.12)}
+.debts-count{display:inline-block;min-width:1.4rem;padding:.05rem .35rem;border-radius:10px;background:#8b1a1a;color:#fff;font-family:'Share Tech Mono',monospace;font-size:.75rem;letter-spacing:0}
+.debts-count.zero{background:#2a2218;color:var(--dim)}
+#debtsOverlay{display:none;position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.78);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem}
+#debtsOverlay.show{display:flex;animation:fadeIn .25s}
+.debts-card{position:relative;width:min(520px,94vw);max-height:84vh;overflow-y:auto;padding:1.8rem 1.4rem 1.3rem;background:linear-gradient(160deg,#f5e9c8 0%,#ede0aa 60%,#d9c98a 100%);border:1px solid #b8960a;color:#2a1a04;box-shadow:0 0 0 6px rgba(0,0,0,.35),0 0 60px rgba(212,168,67,.25);transform:rotate(.6deg);animation:cardIn .4s cubic-bezier(.2,1.4,.4,1)}
+.debts-close{position:absolute;top:8px;right:12px;background:none;border:none;font-size:1.5rem;color:#6a4408;cursor:pointer}
+.debts-title{font-family:'Oswald',sans-serif;font-size:1.5rem;font-weight:700;text-align:center;letter-spacing:.08em}
+.debts-sub{text-align:center;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:#7a5a20;margin-bottom:1rem}
+.debts-group{margin-bottom:1rem}
+.debts-group h4{font-family:'Oswald',sans-serif;font-size:.9rem;letter-spacing:.15em;text-transform:uppercase;border-bottom:1px dashed rgba(100,60,0,.35);padding-bottom:.25rem;margin-bottom:.4rem}
+.debts-group.g-reward h4{color:#1e6b34}.debts-group.g-penalty h4{color:#8b1a1a}.debts-group.g-skull h4{color:#3a2a2a}.debts-group.g-special h4{color:#5b2380}
+.debt{display:flex;align-items:flex-start;gap:.6rem;padding:.35rem .2rem;border-bottom:1px solid rgba(100,60,0,.12);font-size:.95rem;line-height:1.35}
+.debt .dx{flex:0 0 auto;font-family:'Oswald',sans-serif;font-size:.8rem;color:#fff;background:#8b1a1a;border-radius:9px;padding:.05rem .45rem;margin-top:.1rem}
+.debts-group.g-reward .debt .dx{background:#1e6b34}.debts-group.g-special .debt .dx{background:#5b2380}.debts-group.g-skull .debt .dx{background:#3a2a2a}
+.debt .dd{font-family:'Share Tech Mono',monospace;font-size:.68rem;color:#8a6a30}
+.debts-empty{text-align:center;padding:1.5rem 0;font-size:1.05rem;color:#5a4010}
 /* ── result card ── */
 #resultOverlay{overflow:hidden;display:none;position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.78);backdrop-filter:blur(3px);align-items:center;justify-content:center;padding:1rem}
 #resultOverlay.show{display:flex;animation:fadeIn .3s}
@@ -756,6 +776,7 @@ async function loadCardsRemote() {
     <div class="controls">
       <button class="btn-spin" id="spinBtn" onclick="startSpin()">⚡ КРУТИТЬ!</button>
       <div class="spin-status" id="spinStatus"></div>
+      <button class="debts-btn" id="debtsBtn" onclick="openDebts()">📌 Невыполненное <span class="debts-count" id="debtsCount">0</span></button>
     </div>
     <div id="result"></div>
   </div>
@@ -768,6 +789,17 @@ async function loadCardsRemote() {
   cursor:pointer;transition:all .25s;
 " onmouseover="this.style.color='#d4a843';this.style.borderColor='rgba(212,168,67,0.8)'"
    onmouseout="this.style.color='#7a6840';this.style.borderColor='rgba(212,168,67,0.3)'">← Назад</button>
+</div>
+
+<!-- DEBTS (невыполненные выигрыши) -->
+<div id="debtsOverlay" onclick="if(event.target===this)closeDebts()">
+  <div class="debts-card">
+    <div class="rc-pin"></div>
+    <button class="debts-close" onclick="closeDebts()">×</button>
+    <div class="debts-title">📌 Невыполненное</div>
+    <div class="debts-sub">то, что выпало на колесе и ещё не исполнено</div>
+    <div id="debtsBody"></div>
+  </div>
 </div>
 
 <!-- RESULT CARD -->
@@ -880,6 +912,7 @@ async function addPending(text,type){
   if(ex) ex.count=(ex.count||1)+1;
   else list.push({id:Date.now(),date:new Date().toLocaleString('ru'),text,type,count:1});
   localStorage.setItem('fnv_pending',JSON.stringify(list));
+  updateDebtsButton();
   await sbSet('fnv_pending',list);
 }
 
@@ -1400,8 +1433,41 @@ function animateLever(){
   lvAnim=requestAnimationFrame(frame);
 }
 
+
+// ═══════════ «НЕВЫПОЛНЕННОЕ» ═══════════
+function loadDebts(){ try{ const d=JSON.parse(localStorage.getItem('fnv_pending')); return Array.isArray(d)?d:[]; }catch(e){ return []; } }
+function updateDebtsButton(){
+  const n=loadDebts().reduce((a,o)=>a+(o.count||1),0);
+  const c=document.getElementById('debtsCount'); if(!c) return;
+  c.textContent=n; c.classList.toggle('zero',n===0);
+}
+function openDebts(){
+  const list=loadDebts();
+  const body=document.getElementById('debtsBody'); body.innerHTML='';
+  if(!list.length){ body.innerHTML='<div class="debts-empty">Всё исполнено ✨<br><small>Пустошь довольна.</small></div>'; }
+  const groups=[['reward','🎁 Тебе должны'],['special','☣️ Особое'],['penalty','⚠️ Ты должен'],['skull','💀 Тайные приговоры']];
+  groups.forEach(([type,title])=>{
+    const items=list.filter(o=>(o.type==='bonus'?'reward':o.type)===type);
+    if(!items.length) return;
+    const g=document.createElement('div'); g.className='debts-group g-'+type;
+    g.innerHTML=`<h4>${title}</h4>`;
+    items.forEach(o=>{
+      const prize=(getEffectivePrizes()||[]).find(p=>(p.text||'').trim()===(o.text||'').trim());
+      const row=document.createElement('div'); row.className='debt';
+      row.innerHTML=`<span class="dx">×${o.count||1}</span><div style="flex:1"><div class="dt"></div><div class="dd"></div></div>`;
+      row.querySelector('.dt').textContent=o.text;
+      row.querySelector('.dd').textContent=(prize&&prize.detail?prize.detail+' · ':'')+(o.date?'с '+o.date.split(',')[0]:'');
+      g.appendChild(row);
+    });
+    body.appendChild(g);
+  });
+  document.getElementById('debtsOverlay').classList.add('show');
+}
+function closeDebts(){ document.getElementById('debtsOverlay').classList.remove('show'); }
+
 // ═══════════ UI ═══════════
 function updateUI(){
+  updateDebtsButton();
   if((typeof FX!=='undefined')) FX.nixie(document.getElementById('ticketsCount'), state.tickets, 2); else document.getElementById('ticketsCount').textContent=state.tickets;
   const empty=!getWheelPrizes().length;
   const blocked=state.tickets<=0||state.spinsToday>=DAY_LIMIT||empty;
@@ -1562,7 +1628,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Все ключи грузим из Supabase параллельно (раньше — по одному, это и было «думает»)
   const keys = ['fnv_state','fnv_contracts','fnv_weekly_queue','fnv_weekly','fnv_coins',
-                'fnv_guaranteed','fnv_prizes','fnv_hidden','fnv_weekly_bonus_enabled','fnv_struck'];
+                'fnv_guaranteed','fnv_prizes','fnv_hidden','fnv_weekly_bonus_enabled','fnv_struck','fnv_pending'];
   const vals = await Promise.all(keys.map(k => sbGet(k)));
   keys.forEach((k, i) => {
     const v = vals[i];
@@ -1647,6 +1713,8 @@ setInterval(async () => {
   } catch(e) {}
 
   // Poll contracts
+  const pollPending = await sbGet('fnv_pending');
+  if (Array.isArray(pollPending)) { localStorage.setItem('fnv_pending', JSON.stringify(pollPending)); updateDebtsButton(); }
   const pollContracts = await sbGet('fnv_contracts');
   if (pollContracts) {
     localStorage.setItem('fnv_contracts', JSON.stringify(pollContracts));
