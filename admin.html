@@ -1226,11 +1226,17 @@ function saveCardsToStorage(cards) {
   window._cardsCache = cards;
 }
 
-function getWeekNumber() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  return Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000));
+// Неделя по ISO: с понедельника по воскресенье (как в календаре)
+function isoWeek(d) {
+  d = d || new Date();
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);
+  const y = t.getUTCFullYear();
+  return { year: y, week: Math.ceil(((t - Date.UTC(y, 0, 1)) / 86400000 + 1) / 7) };
 }
+function getWeekNumber() { return isoWeek().week; }
+function weekClaimKey() { const w = isoWeek(); return `claimed_${w.year}_w${w.week}`; }
 
 function renderCardsAdmin() {
   const cards   = loadCards();
@@ -1251,7 +1257,7 @@ function renderCardsAdmin() {
 
   cards.forEach((c, i) => {
     const isCurrent = i === curIdx;
-    const claimed   = ws[`claimed_${new Date().getFullYear()}_${week}`];
+    const claimed   = ws[weekClaimKey()];
     const card = document.createElement('div');
     card.style.cssText = `
       position:relative;width:160px;background:var(--bg3);
@@ -1496,9 +1502,9 @@ function renderWeeklyStatus() {
   const el = document.getElementById('weeklyStatus'); if (!el) return;
   let ws = {}; try { ws = JSON.parse(localStorage.getItem('fnv_weekly')) || {}; } catch(e) {}
   const now = new Date(), week = getWeekNumber();
-  const got = !!ws[`claimed_${now.getFullYear()}_${week}`];
-  // даты текущей «недели» (считается от 1 января)
-  const start = new Date(now.getFullYear(), 0, 1 + week * 7), end = new Date(start); end.setDate(end.getDate() + 6);
+  const got = !!ws[weekClaimKey()];
+  // понедельник – воскресенье текущей недели
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)), end = new Date(start); end.setDate(end.getDate() + 6);
   const f = d => d.toLocaleDateString('ru', {day:'numeric', month:'short'});
   el.innerHTML = got
     ? `<span style="color:var(--green)">✓ На этой неделе (${f(start)} – ${f(end)}) билет получен</span>`
@@ -1525,7 +1531,7 @@ function resetWeeklyBonus() {
     const start = new Date(now.getFullYear(), 0, 1);
     const week = Math.floor((now - start) / (7 * 24 * 60 * 60 * 1000));
     // Remove claimed flag for this week
-    delete ws[`claimed_${now.getFullYear()}_${week}`];
+    delete ws[weekClaimKey()];
     localStorage.setItem('fnv_weekly', JSON.stringify(ws));
     sbSet('fnv_weekly', ws);
     renderWeeklyStatus();
