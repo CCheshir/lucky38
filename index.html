@@ -1296,6 +1296,8 @@ function onSpinEnd(list){
   if(dT) state.tickets=Math.max(0,state.tickets+dT);
   state.history.unshift({date:new Date().toLocaleString('ru'),prize:prize.text,type:prize.type});
   if(state.history.length>100) state.history.pop();
+  const garlandDone = (typeof dailyMark==='function') ? dailyMark() : false;
+  if(garlandDone) setTimeout(()=>{ renderGarland(); garlandCelebrate(); }, 1400);
 
   const toStrike=[];
   if(isOneTime(prize)) toStrike.push(prizeKey(prize));
@@ -1468,6 +1470,7 @@ function closeDebts(){ document.getElementById('debtsOverlay').classList.remove(
 // ═══════════ UI ═══════════
 function updateUI(){
   updateDebtsButton();
+  if(typeof renderGarland==='function') renderGarland();
   if((typeof FX!=='undefined')) FX.nixie(document.getElementById('ticketsCount'), state.tickets, 2); else document.getElementById('ticketsCount').textContent=state.tickets;
   const empty=!getWheelPrizes().length;
   const blocked=state.tickets<=0||state.spinsToday>=DAY_LIMIT||empty;
@@ -1628,7 +1631,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Все ключи грузим из Supabase параллельно (раньше — по одному, это и было «думает»)
   const keys = ['fnv_state','fnv_contracts','fnv_weekly_queue','fnv_weekly','fnv_coins',
-                'fnv_guaranteed','fnv_prizes','fnv_hidden','fnv_weekly_bonus_enabled','fnv_struck','fnv_pending'];
+                'fnv_guaranteed','fnv_prizes','fnv_hidden','fnv_weekly_bonus_enabled','fnv_struck','fnv_pending','fnv_tips','fnv_bets','fnv_daily_cfg'];
   const vals = await Promise.all(keys.map(k => sbGet(k)));
   keys.forEach((k, i) => {
     const v = vals[i];
@@ -1713,6 +1716,10 @@ setInterval(async () => {
   } catch(e) {}
 
   // Poll contracts
+  const [pTips, pBets, pCfg] = await Promise.all([sbGet('fnv_tips'), sbGet('fnv_bets'), sbGet('fnv_daily_cfg')]);
+  let boardChanged = false;
+  [['fnv_tips',pTips],['fnv_bets',pBets],['fnv_daily_cfg',pCfg]].forEach(([k,v])=>{ if(v===null||v===undefined) return; const nv=JSON.stringify(v); if(localStorage.getItem(k)!==nv){ localStorage.setItem(k,nv); boardChanged=true; } });
+  if (boardChanged) { if (typeof renderGarland==='function') renderGarland(); const csx=document.getElementById('contractsScreen'); if (csx && csx.style.display!=='none' && document.activeElement?.id!=='betText') renderTipsAndBets(); }
   const pollPending = await sbGet('fnv_pending');
   if (Array.isArray(pollPending)) { localStorage.setItem('fnv_pending', JSON.stringify(pollPending)); updateDebtsButton(); }
   const pollContracts = await sbGet('fnv_contracts');
@@ -1756,6 +1763,32 @@ setInterval(async () => {
     </div>
     <div id="contractsBoard" style="display:flex;flex-wrap:wrap;gap:1.5rem;justify-content:center;align-items:flex-start;"></div>
     
+    <!-- TIPS -->
+    <div class="board-sec tips-sec">
+      <div class="board-sec-h">💸 Чаевые</div>
+      <div class="board-sec-sub">билеты от Андрея и Ярика — за шутки, мемы и просто так</div>
+      <div class="tips-row" id="tipsRow"></div>
+    </div>
+
+    <!-- BETS -->
+    <div class="board-sec bets-sec">
+      <div class="board-sec-h">🎲 Ставки</div>
+      <div class="board-sec-sub">поставь билеты на исход — сбудется, получишь вдвое больше</div>
+      <div class="bet-form">
+        <textarea id="betText" placeholder="Ставлю, что…"></textarea>
+        <div class="bf-row">
+          <span>Ставка</span><input type="number" id="betStake" min="1" value="1"><span>🎟️</span>
+          <label style="display:flex;align-items:center;gap:.3rem;cursor:pointer"><input type="checkbox" id="betSealed" onchange="toggleBetSeal()"> 🔒 запечатать до</label>
+          <input type="date" id="betReveal" style="display:none">
+          <button onclick="placeBet()">Поставить</button>
+        </div>
+        <div class="bf-msg" id="betMsg"></div>
+        <div class="bf-hint">Билеты списываются сразу. Если сбудется — вернётся ×2. Исход решают Андрей и Ярик.<br>
+          🔒 Запечатанную ставку до указанной даты не может прочитать никто, кроме тебя — даже в админке видно только «запечатанный конверт».</div>
+      </div>
+      <div class="bets-row" id="betsRow"></div>
+    </div>
+
     <!-- Archive section -->
     <div id="archiveSection" style="margin-top:3rem;border-top:1px solid rgba(212,168,67,0.15);padding-top:2rem;">
       <div onclick="toggleArchive()" style="
@@ -1841,6 +1874,7 @@ function renderContractsScreen() {
   if (archive && archived.length) {
     archived.forEach(c => archive.appendChild(makeArchivedNote(c)));
   }
+  if (typeof renderTipsAndBets === 'function') renderTipsAndBets();
 }
 
 function makeNote(c) {
@@ -2828,6 +2862,217 @@ const FX = (()=>{
   return {audio,bulbs,tick,pointerBounce,cardEffects,showSkull,nixie,lobbyHighlight,init};
 })();
 FX.init();
+</script>
+
+
+<!-- ════════ ГИРЛЯНДА НЕДЕЛИ · ЧАЕВЫЕ · СТАВКИ ════════ -->
+<style>
+/* ── гирлянда ── */
+.hud-col{display:flex;flex-direction:column;align-items:center;gap:.35rem;position:relative}
+.garland{position:relative;display:flex;align-items:flex-start;gap:6px;padding:2px 10px 0;cursor:help}
+.garland::before{content:'';position:absolute;left:4px;right:4px;top:3px;height:9px;border-top:1.5px solid #4a3a20;border-radius:0 0 50% 50%/0 0 100% 100%}
+.gl{position:relative;display:flex;flex-direction:column;align-items:center;gap:1px}
+.gl i{display:block;width:3px;height:5px;background:#3a2c14;margin-top:3px}
+.gl b{display:block;width:11px;height:15px;border-radius:50% 50% 45% 45%/60% 60% 40% 40%;
+  background:radial-gradient(circle at 40% 35%,rgba(255,255,255,.25),rgba(80,60,30,.35) 40%,rgba(30,20,10,.9));
+  box-shadow:inset 0 0 0 1px rgba(255,220,150,.12);transition:all .3s}
+.gl.on b{background:radial-gradient(circle at 40% 35%,#fff,#ffe08a 25%,#ff9d2e 60%,#a04a00);box-shadow:0 0 6px #ffcf70,0 0 14px rgba(255,150,40,.75),0 0 24px rgba(255,120,20,.4);animation:glTw 3s ease-in-out infinite}
+.gl.on:nth-child(2n) b{animation-delay:.7s}.gl.on:nth-child(3n) b{animation-delay:1.4s}
+@keyframes glTw{0%,100%{filter:brightness(1)}50%{filter:brightness(1.25)}}
+.gl.today b{outline:1px dashed rgba(255,210,120,.55);outline-offset:2px}
+.gl small{font-family:'Share Tech Mono',monospace;font-size:.55rem;color:var(--dim);line-height:1;margin-top:2px}
+.gl.today small{color:var(--gold)}
+.garland.done .gl.on b{background:radial-gradient(circle at 40% 35%,#fff,#c8ffd6 25%,#2ee87a 60%,#0a5a28);box-shadow:0 0 6px #d8ffe0,0 0 14px rgba(40,220,100,.75)}
+.garland-tip{display:none;position:absolute;top:calc(100% + 8px);left:50%;transform:translateX(-50%);z-index:300;width:260px;padding:.7rem .8rem;
+  background:rgba(12,9,5,.97);border:1px solid var(--gold-d);box-shadow:0 8px 30px rgba(0,0,0,.7);font-family:'Share Tech Mono',monospace;font-size:.72rem;line-height:1.5;color:var(--text);text-align:left;cursor:default}
+.garland-tip b{color:var(--gold-l)}
+.garland-tip::before{content:'';position:absolute;top:-6px;left:50%;margin-left:-6px;border:6px solid transparent;border-top:0;border-bottom-color:var(--gold-d)}
+.hud-col:hover .garland-tip,.garland.tap .garland-tip{display:block}
+.garland.pop .gl.on b{animation:glPop .6s ease-out 3}
+@keyframes glPop{50%{transform:scale(1.5);filter:brightness(1.8)}}
+
+/* ── доска: общие заголовки секций ── */
+.board-sec{position:relative;z-index:2;max-width:1100px;margin:2.6rem auto 0}
+.board-sec-h{display:flex;align-items:center;justify-content:center;gap:.8rem;font-family:'Oswald',sans-serif;letter-spacing:.25em;text-transform:uppercase;font-size:1.05rem;margin-bottom:.4rem}
+.board-sec-sub{text-align:center;font-family:'Share Tech Mono',monospace;font-size:.72rem;color:#7a6840;letter-spacing:.1em;margin-bottom:1.2rem}
+
+/* ── чаевые: кассовые чеки ── */
+.tips-sec .board-sec-h{color:#7fdc9a;text-shadow:0 0 14px rgba(80,220,140,.35)}
+.tips-row{display:flex;flex-wrap:wrap;gap:1.2rem;justify-content:center;align-items:flex-start}
+.tip{position:relative;width:190px;padding:1rem .9rem 1.4rem;background:#f4f1e6;color:#2b2b2b;font-family:'Share Tech Mono',monospace;font-size:.78rem;line-height:1.45;
+  box-shadow:3px 4px 12px rgba(0,0,0,.55);transform:rotate(var(--r,0deg));
+  -webkit-mask:linear-gradient(#000,#000) top/100% calc(100% - 8px) no-repeat,radial-gradient(circle 5px at 50% 100%,transparent 4.5px,#000 5px) bottom/12px 8px repeat-x;
+  mask:linear-gradient(#000,#000) top/100% calc(100% - 8px) no-repeat,radial-gradient(circle 5px at 50% 100%,transparent 4.5px,#000 5px) bottom/12px 8px repeat-x}
+.tip .th{text-align:center;font-weight:bold;letter-spacing:.15em;border-bottom:1px dashed #999;padding-bottom:.35rem;margin-bottom:.4rem}
+.tip .tl{display:flex;justify-content:space-between;gap:.5rem}
+.tip .tr{margin:.45rem 0;font-family:'Special Elite',cursive;font-size:.9rem;color:#1a1a1a}
+.tip .tt{border-top:1px dashed #999;padding-top:.35rem;display:flex;justify-content:space-between;font-weight:bold;font-size:.9rem}
+.tip .tstamp{position:absolute;right:10px;top:58px;border:2px solid #1e8a4a;color:#1e8a4a;font-weight:bold;font-size:.7rem;letter-spacing:.12em;padding:.05rem .35rem;transform:rotate(-12deg);opacity:.75}
+.tips-empty{text-align:center;color:#5a4c2c;font-family:'Share Tech Mono',monospace;font-size:.8rem;padding:1rem}
+
+/* ── ставки: букмекерские купоны ── */
+.bets-sec .board-sec-h{color:#7fb8ff;text-shadow:0 0 14px rgba(90,160,255,.35)}
+.bets-row{display:flex;flex-wrap:wrap;gap:1.2rem;justify-content:center;align-items:flex-start}
+.bet{position:relative;width:240px;padding:.9rem 1rem 1rem 1.3rem;color:#e4ecff;font-family:'Share Tech Mono',monospace;font-size:.78rem;
+  background:linear-gradient(160deg,#16243f,#0d1629);border:1px solid #2c4675;box-shadow:3px 4px 14px rgba(0,0,0,.6),inset 0 0 0 3px rgba(120,170,255,.06);transform:rotate(var(--r,0deg))}
+.bet::before{content:'';position:absolute;left:8px;top:6px;bottom:6px;border-left:2px dotted rgba(140,180,255,.35)}
+.bet .bh{display:flex;justify-content:space-between;align-items:center;font-family:'Oswald',sans-serif;letter-spacing:.15em;font-size:.72rem;color:#8fb4ff;border-bottom:1px solid rgba(140,180,255,.25);padding-bottom:.35rem;margin-bottom:.5rem}
+.bet .chip{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:radial-gradient(circle,#c0392b 45%,#fff 46%,#fff 54%,#c0392b 55%);border:2px dashed #fff;color:#fff;font-weight:bold;font-size:.75rem;box-shadow:0 2px 4px rgba(0,0,0,.5)}
+.bet .btxt{font-family:'Special Elite',cursive;font-size:.95rem;line-height:1.45;color:#fff;margin:.3rem 0 .6rem;word-break:break-word}
+.bet .bmeta{display:flex;justify-content:space-between;font-size:.7rem;color:#8fa6cc}
+.bet .bstatus{margin-top:.5rem;text-align:center;font-family:'Oswald',sans-serif;letter-spacing:.2em;font-size:.8rem;padding:.2rem;border:1px solid rgba(140,180,255,.35)}
+.bet.won{border-color:#2ecc71}.bet.won .bstatus{color:#2ecc71;border-color:#2ecc71}
+.bet.lost{opacity:.6;filter:grayscale(.5)}.bet.lost .bstatus{color:#e74c3c;border-color:#e74c3c}
+.bet .seal{display:inline-flex;align-items:center;gap:.3rem;font-size:.68rem;color:#ffcf70}
+.bet-form{max-width:520px;margin:0 auto 1.4rem;padding:1rem 1.1rem;background:linear-gradient(160deg,#16243f,#0d1629);border:1px solid #2c4675;box-shadow:0 6px 24px rgba(0,0,0,.5)}
+.bet-form textarea{width:100%;min-height:58px;resize:vertical;background:rgba(0,0,0,.35);border:1px solid #2c4675;color:#e4ecff;font-family:'Special Elite',cursive;font-size:.95rem;padding:.5rem .6rem;outline:none}
+.bet-form textarea:focus{border-color:#7fb8ff}
+.bet-form .bf-row{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin-top:.6rem;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:#8fa6cc}
+.bet-form input[type=number],.bet-form input[type=date]{background:rgba(0,0,0,.35);border:1px solid #2c4675;color:#e4ecff;font-family:'Share Tech Mono',monospace;padding:.3rem .4rem;color-scheme:dark}
+.bet-form input[type=number]{width:64px}
+.bet-form button{margin-left:auto;font-family:'Oswald',sans-serif;letter-spacing:.18em;text-transform:uppercase;padding:.45rem 1.2rem;background:linear-gradient(180deg,#2c5aa0,#1a3a70);border:1px solid #7fb8ff;color:#fff;cursor:pointer}
+.bet-form button:hover{background:linear-gradient(180deg,#3a6cc0,#22488a)}
+.bet-form .bf-msg{margin-top:.4rem;min-height:1rem;font-family:'Share Tech Mono',monospace;font-size:.75rem;color:#ff8a7a}
+.bet-form .bf-hint{font-size:.68rem;color:#6f86ad;margin-top:.4rem;line-height:1.4}
+</style>
+
+<script>
+// ════════════════════════════════════════
+//  ГИРЛЯНДА НЕДЕЛИ: крути колесо в разные дни → 4 дня из 7 = +2 🎟️
+// ════════════════════════════════════════
+const DAY_NAMES=['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+function dailyCfg(){
+  let c=null; try{ c=JSON.parse(localStorage.getItem('fnv_daily_cfg')); }catch(e){}
+  return { need: (c&&c.need)||4, reward: (c&&c.reward!==undefined)?c.reward:2 };
+}
+function curWeekKey(){ const w=isoWeek(); return `${w.year}_w${w.week}`; }
+function getDaily(){
+  const k=curWeekKey();
+  if(!state.daily || state.daily.week!==k) return {week:k, days:[0,0,0,0,0,0,0], rewarded:false};
+  return state.daily;
+}
+// вызывается при каждой прокрутке
+function dailyMark(){
+  const d=getDaily(), idx=(new Date().getDay()+6)%7;
+  d.days=[...d.days]; d.days[idx]=1;
+  const cfg=dailyCfg(), count=d.days.filter(Boolean).length;
+  let rewarded=false;
+  if(!d.rewarded && count>=cfg.need){
+    d.rewarded=true; rewarded=true;
+    state.tickets+=cfg.reward;
+    state.history.unshift({date:new Date().toLocaleString('ru'),prize:`Гирлянда недели: ${count} дн. → +${cfg.reward} 🎟️`,type:'bonus'});
+  }
+  state.daily=d;
+  return rewarded;
+}
+function renderGarland(){
+  const host=document.getElementById('garland'); if(!host) return;
+  const d=getDaily(), cfg=dailyCfg(), today=(new Date().getDay()+6)%7;
+  const count=d.days.filter(Boolean).length;
+  if(!host.querySelector('.gl')){
+    host.innerHTML=DAY_NAMES.map((n,i)=>`<div class="gl"><i></i><b></b><small>${n}</small></div>`).join('')+'<div class="garland-tip"></div>';
+    host.onclick=(e)=>{ e.stopPropagation(); host.classList.toggle('tap'); };
+    document.addEventListener('click',()=>host.classList.remove('tap'));
+  }
+  host.querySelectorAll('.gl').forEach((g,i)=>{ g.classList.toggle('on',!!d.days[i]); g.classList.toggle('today',i===today); });
+  host.classList.toggle('done',d.rewarded);
+  const left=Math.max(0,cfg.need-count);
+  host.querySelector('.garland-tip').innerHTML=
+    `<b>🎄 Гирлянда недели</b><br>Каждый день, когда ты крутишь колесо, загорается лампочка этого дня.<br>`+
+    `Зажги <b>${cfg.need} из 7</b> за неделю (пн–вс) — получишь <b>+${cfg.reward} 🎟️</b>.<br><br>`+
+    (d.rewarded ? `<span style="color:#2ee87a">✓ Награда этой недели получена!</span>`
+               : `Горит: <b>${count}/${cfg.need}</b>${left?` · осталось ${left}`:''}<br>${d.days[today]?'Сегодня уже отмечено ✓':'Сегодня ещё не отмечено — крутани колесо!'}`);
+}
+function garlandCelebrate(){
+  const host=document.getElementById('garland'); if(!host) return;
+  host.classList.remove('pop'); void host.offsetWidth; host.classList.add('pop');
+  if(typeof FX!=='undefined'){ FX.audio.bonus(); }
+  if(typeof confetti==='function'){ const r=host.getBoundingClientRect(); confetti({particleCount:50,spread:70,origin:{x:(r.left+r.width/2)/innerWidth,y:(r.bottom)/innerHeight},colors:['#ffcf70','#2ee87a','#fff']}); }
+}
+(function(){
+  const hud=document.querySelector('.tickets-hud'); if(!hud) return;
+  const col=document.createElement('div'); col.className='hud-col';
+  hud.parentNode.insertBefore(col,hud); col.appendChild(hud);
+  const g=document.createElement('div'); g.className='garland'; g.id='garland'; col.appendChild(g);
+  renderGarland();
+})();
+
+// ════════════════════════════════════════
+//  ЧАЕВЫЕ (fnv_tips) и СТАВКИ (fnv_bets) на доске контрактов
+// ════════════════════════════════════════
+function loadArr(k){ try{ const v=JSON.parse(localStorage.getItem(k)); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+// «Запечатанный» текст хранится не открытым текстом, а в закодированном виде
+function sealText(t){ try{ return btoa(unescape(encodeURIComponent(t))).split('').reverse().join(''); }catch(e){ return ''; } }
+function unsealText(s){ try{ return decodeURIComponent(escape(atob((s||'').split('').reverse().join('')))); }catch(e){ return '…'; } }
+function betText(b){ return b.sealed ? unsealText(b.enc) : (b.text||''); }
+function fmtDate(iso){ if(!iso) return ''; const [y,m,d]=iso.split('-'); return `${d}.${m}.${y}`; }
+function rnd(id){ let h=0; String(id).split('').forEach(c=>h=(h*31+c.charCodeAt(0))|0); return ((Math.abs(h)%50)/10-2.5).toFixed(1)+'deg'; }
+
+function renderTips(){
+  const row=document.getElementById('tipsRow'); if(!row) return;
+  const tips=loadArr('fnv_tips').slice().reverse();
+  row.innerHTML='';
+  if(!tips.length){ row.innerHTML='<div class="tips-empty">Пока никто не раскошелился. Шути смешнее.</div>'; return; }
+  tips.slice(0,12).forEach(t=>{
+    const el=document.createElement('div'); el.className='tip'; el.style.setProperty('--r',rnd(t.id));
+    el.innerHTML=`<div class="th">LUCKY 38 · ЧЕК</div>
+      <div class="tl"><span>${(t.date||'').split(',')[0]}</span><span>№${String(t.id).slice(-4)}</span></div>
+      <div class="tl"><span>ОТ:</span><span class="tf"></span></div>
+      <div class="tr"></div>
+      <div class="tt"><span>ЧАЕВЫЕ</span><span>+${t.amount} 🎟️</span></div>
+      <div class="tstamp">PAID</div>`;
+    el.querySelector('.tf').textContent=t.from||'—';
+    el.querySelector('.tr').textContent='«'+(t.reason||'просто так')+'»';
+    row.appendChild(el);
+  });
+}
+
+function renderBets(){
+  const row=document.getElementById('betsRow'); if(!row) return;
+  const bets=loadArr('fnv_bets').slice().reverse();
+  row.innerHTML='';
+  if(!bets.length){ row.innerHTML='<div class="tips-empty" style="color:#4f6890">Ставок пока нет. Чувствуешь удачу?</div>'; }
+  bets.forEach(b=>{
+    const el=document.createElement('div'); el.className='bet '+(b.status||'open'); el.style.setProperty('--r',rnd(b.id));
+    const st={open:'⏳ ЖДЁТ ИСХОДА',won:`✓ СЫГРАЛА · +${b.stake*2} 🎟️`,lost:'✗ НЕ СЫГРАЛА'}[b.status||'open'];
+    el.innerHTML=`<div class="bh"><span>КУПОН №${String(b.id).slice(-4)}</span><span class="chip">${b.stake}</span></div>
+      <div class="btxt"></div>
+      <div class="bmeta"><span>${(b.created||'').split(',')[0]}</span><span>${b.sealed?`<span class="seal">🔒 до ${fmtDate(b.revealAt)}</span>`:'открытая'}</span></div>
+      <div class="bstatus">${st}</div>`;
+    el.querySelector('.btxt').textContent=betText(b);
+    row.appendChild(el);
+  });
+  const st=document.getElementById('betStake'); if(st) st.max=Math.max(1,state.tickets);
+}
+
+async function placeBet(){
+  const msg=document.getElementById('betMsg'); msg.textContent='';
+  const text=document.getElementById('betText').value.trim();
+  const stake=parseInt(document.getElementById('betStake').value)||0;
+  const sealed=document.getElementById('betSealed').checked;
+  const revealAt=document.getElementById('betReveal').value;
+  if(text.length<3){ msg.textContent='Опиши, на что ставишь.'; return; }
+  if(stake<1){ msg.textContent='Ставка — минимум 1 билет.'; return; }
+  if(stake>state.tickets){ msg.textContent=`Не хватает билетов (есть ${state.tickets}).`; return; }
+  if(sealed && (!revealAt || revealAt<=today())){ msg.textContent='Для запечатанной ставки выбери дату в будущем.'; return; }
+  state.tickets-=stake;
+  state.history.unshift({date:new Date().toLocaleString('ru'),prize:`Ставка ${stake} 🎟️${sealed?' (запечатана)':''}`,type:'penalty'});
+  saveState(); updateUI();
+  const bet={id:Date.now(),stake,status:'open',created:new Date().toLocaleString('ru'),sealed};
+  if(sealed){ bet.enc=sealText(text); bet.revealAt=revealAt; } else bet.text=text;
+  let bets=await sbGet('fnv_bets'); if(!Array.isArray(bets)) bets=loadArr('fnv_bets');
+  bets.push(bet); localStorage.setItem('fnv_bets',JSON.stringify(bets)); await sbSet('fnv_bets',bets);
+  document.getElementById('betText').value=''; document.getElementById('betSealed').checked=false; toggleBetSeal();
+  renderBets(); const ct=document.getElementById('c-tickets'); if(ct) FX.nixie(ct,state.tickets,2);
+  if(typeof FX!=='undefined') FX.audio.stamp();
+  tgNotify(`🎲 <b>Мотя сделал ставку</b> на ${stake} 🎟️${sealed?' (запечатана до '+fmtDate(revealAt)+')':''}`);
+}
+function toggleBetSeal(){
+  const on=document.getElementById('betSealed').checked;
+  const d=document.getElementById('betReveal'); d.style.display=on?'':'none';
+  if(on && !d.value){ const t=new Date(); t.setDate(t.getDate()+7); d.value=`${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; }
+}
+function renderTipsAndBets(){ renderTips(); renderBets(); }
 </script>
 
 <!-- ════════ ADMIN GATE (незаметная шестерёнка в углу) ════════ -->
