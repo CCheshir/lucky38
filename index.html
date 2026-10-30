@@ -375,7 +375,7 @@ input[type=range].mp-vol-slider {
 
 
 /* ══ ТЕХОБСЛУЖИВАНИЕ ══ */
-#maintOverlay{display:none;position:fixed;inset:0;z-index:9000;background:#0b0905;overflow:hidden;font-family:'Share Tech Mono',monospace;color:#e8dcb8;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:1rem;box-sizing:border-box}
+#maintOverlay{display:none;position:absolute;top:0;bottom:0;left:0;right:0;min-height:100vh;z-index:700;background:#0b0905;overflow:hidden;font-family:'Share Tech Mono',monospace;color:#e8dcb8;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:1rem;box-sizing:border-box}
 #maintOverlay.show{display:flex}
 .mt-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,rgba(212,168,67,.09),transparent 60%),repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 2px,transparent 2px 4px)}
 .mt-tape{position:absolute;left:-15%;width:130%;height:46px;background:repeating-linear-gradient(-45deg,#f2c200 0 26px,#141210 26px 52px);box-shadow:0 4px 18px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1}
@@ -559,6 +559,23 @@ async function loadCardsRemote() {
 <!-- GAME -->
 <div id="gameScreen">
   <div class="game-bg"></div>
+
+<!-- ════════ ТЕХОБСЛУЖИВАНИЕ ════════ -->
+<div id="maintOverlay" aria-live="polite">
+  <div class="mt-bg"></div>
+  <div class="mt-tape t1"><span>ВНИМАНИЕ · ВНИМАНИЕ · ВНИМАНИЕ · ВНИМАНИЕ</span></div>
+  <div class="mt-tape t2"><span>ПРОХОД ЗАКРЫТ · ПРОХОД ЗАКРЫТ · ПРОХОД ЗАКРЫТ</span></div>
+  <div class="mt-sign">
+    <h1 id="mtTitle">ПОЖАЛУЙСТА, ЗАЙДИТЕ ПОЗЖЕ</h1>
+    <p id="mtText">Казино находится в процессе реконструкции. Приносим извинения за неудобства.</p>
+    <div class="mt-sub">LUCKY 38 · БЕЗОПАСНОСТЬ ПРЕЖДЕ ВСЕГО</div>
+  </div>
+  <div class="mt-game">
+    <div class="mt-hud"><span>Высота: <b id="mtScore">0</b></span><span>Рекорд: <b id="mtBest">0</b></span></div>
+    <canvas id="mtCanvas" width="340" height="480"></canvas>
+    <div class="mt-hint">← → или мышь / палец · пока ждёте, прыгайте по строительным лесам</div>
+  </div>
+</div>
 
 <!-- CARD MODAL -->
 <div id="weeklyCardModal" style="
@@ -3146,22 +3163,6 @@ document.getElementById('admGateInp').addEventListener('keydown',e=>{
 </script>
 
 
-<!-- ════════ ТЕХОБСЛУЖИВАНИЕ ════════ -->
-<div id="maintOverlay" aria-live="polite">
-  <div class="mt-bg"></div>
-  <div class="mt-tape t1"><span>ВНИМАНИЕ · ВНИМАНИЕ · ВНИМАНИЕ · ВНИМАНИЕ</span></div>
-  <div class="mt-tape t2"><span>ПРОХОД ЗАКРЫТ · ПРОХОД ЗАКРЫТ · ПРОХОД ЗАКРЫТ</span></div>
-  <div class="mt-sign">
-    <h1 id="mtTitle">ПОЖАЛУЙСТА, ЗАЙДИТЕ ПОЗЖЕ</h1>
-    <p id="mtText">Казино находится в процессе реконструкции. Приносим извинения за неудобства.</p>
-    <div class="mt-sub">LUCKY 38 · БЕЗОПАСНОСТЬ ПРЕЖДЕ ВСЕГО</div>
-  </div>
-  <div class="mt-game">
-    <div class="mt-hud"><span>Высота: <b id="mtScore">0</b></span><span>Рекорд: <b id="mtBest">0</b></span></div>
-    <canvas id="mtCanvas" width="340" height="480"></canvas>
-    <div class="mt-hint">← → или мышь / палец · пока ждёте, прыгайте по строительным лесам</div>
-  </div>
-</div>
 
 <script>
 /* ══ ТЕХОБСЛУЖИВАНИЕ: оверлей и мини-игра «Строительные леса» ══ */
@@ -3301,8 +3302,8 @@ document.getElementById('admGateInp').addEventListener('keydown',e=>{
       if(t && cfg.title) t.textContent=cfg.title;
       if(x && cfg.text) x.textContent=cfg.text;
     }
-    if(on && !ov.classList.contains('show')){ ov.classList.add('show'); document.body.style.overflow='hidden'; start(); }
-    else if(!on && ov.classList.contains('show')){ ov.classList.remove('show'); document.body.style.overflow=''; stop(); }
+    if(on && !ov.classList.contains('show')){ ov.classList.add('show'); start(); }
+    else if(!on && ov.classList.contains('show')){ ov.classList.remove('show'); stop(); }
   };
   window.refreshMaint=async function(){
     try{ const c=await sbGet('fnv_maint'); if(c!==null && c!==undefined) applyMaint(c); }catch(e){}
