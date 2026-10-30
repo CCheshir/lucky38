@@ -216,7 +216,7 @@ function setState(s) {
 async function refreshFromSupabase() {
   const keys = ['fnv_state','fnv_contracts','fnv_weekly','fnv_weekly_queue',
                  'fnv_coins','fnv_guaranteed','fnv_prizes','fnv_weekly_bonus_enabled',
-                 'fnv_pending','fnv_hidden','fnv_struck','fnv_notes','fnv_drafts','fnv_tips','fnv_bets','fnv_daily_cfg'];
+                 'fnv_pending','fnv_hidden','fnv_struck','fnv_notes','fnv_drafts','fnv_tips','fnv_bets','fnv_daily_cfg','fnv_maint'];
   for (const k of keys) {
     try {
       const v = await sbGet(k);
@@ -253,6 +253,7 @@ async function refreshFromSupabase() {
   </div>
 
   <nav class="anav">
+    <a href="#sec-maint">🚧 Техработы</a>
     <a href="#sec-stats">📊 Игрок</a><a href="#sec-prizes">🎰 Призы</a><a href="#sec-owed">📌 Долги</a><a href="#sec-tips">💸 Чаевые/Ставки</a>
     <a href="#sec-hidden">💀 Тайные</a><a href="#sec-notes">🗒️ Заметки</a><a href="#sec-history">📜 История</a><a href="#sec-contracts">📋 Контракты</a>
     <a href="#sec-cards">🃏 Карточки</a><a href="#sec-coins">💰 Монеты</a><a href="#sec-guaranteed">🎯 Подкрутка</a>
@@ -293,6 +294,25 @@ async function refreshFromSupabase() {
       </div>
 
       <!-- PRIZE EDITOR -->
+      <div class="card" id="sec-maint">
+        <div class="card-title">
+          🚧 Техобслуживание казино
+          <span class="dirty" id="maintStatus" style="font-size:.75rem"></span>
+        </div>
+        <label style="display:flex;align-items:center;gap:.6rem;margin-bottom:.8rem;cursor:pointer">
+          <input type="checkbox" id="maintOn" style="width:18px;height:18px">
+          <span>Казино закрыто: игроки видят ленты и мини-игру</span>
+        </label>
+        <div style="display:grid;gap:.5rem">
+          <input class="inp" id="maintTitle" placeholder="Заголовок на табличке">
+          <textarea class="inp" id="maintText" rows="2" placeholder="Текст под заголовком"></textarea>
+        </div>
+        <div style="margin-top:.8rem">
+          <button class="btn btn-o" onclick="saveMaint()" style="padding:.3rem .8rem;font-size:.75rem">💾 Сохранить</button>
+        </div>
+        <div style="font-size:.7rem;color:var(--dim);margin-top:.5rem">Игроки увидят изменение в течение 5 секунд.</div>
+      </div>
+
       <div class="card" id="sec-prizes">
         <div class="card-title">
           🎰 Призы и вероятности
@@ -675,6 +695,7 @@ async function init(){
   try { hiddenList = loadHidden(); renderHiddenEditor(); } catch(e) { console.error('renderHidden:', e); }
   try { await initNotes(); } catch(e) { console.error('notes:', e); }
   try { renderTipsBetsAdmin(); } catch(e) { console.error('tips/bets:', e); }
+  try { loadMaintAdmin(); } catch(e) { console.error('maint:', e); }
   // Auto-refresh every 8 seconds — skip if user is typing
   setInterval(async () => {
     const active = document.activeElement;
@@ -2152,6 +2173,26 @@ document.getElementById('prizeEditor').addEventListener('change',()=>markDirty('
 document.getElementById('prizeEditor').addEventListener('input',()=>markDirty('prizes'));
 window.addEventListener('beforeunload',e=>{ if(_dirty.prizes||_dirty.hidden){ e.preventDefault(); e.returnValue=''; } });
 
+
+// ══ ТЕХОБСЛУЖИВАНИЕ ══
+const MAINT_KEY='fnv_maint';
+function loadMaintAdmin(){
+  let c={}; try{ c=JSON.parse(localStorage.getItem(MAINT_KEY))||{}; }catch(e){}
+  document.getElementById('maintOn').checked=!!c.on;
+  document.getElementById('maintTitle').value=c.title||'ПОЖАЛУЙСТА, ЗАЙДИТЕ ПОЗЖЕ';
+  document.getElementById('maintText').value=c.text||'Казино находится в процессе реконструкции. Приносим извинения за неудобства.';
+  document.getElementById('maintStatus').textContent=c.on?'● ЗАКРЫТО':'○ открыто';
+}
+async function saveMaint(){
+  const cfg={
+    on:document.getElementById('maintOn').checked,
+    title:document.getElementById('maintTitle').value.trim()||'ПОЖАЛУЙСТА, ЗАЙДИТЕ ПОЗЖЕ',
+    text:document.getElementById('maintText').value.trim()
+  };
+  try{ localStorage.setItem(MAINT_KEY,JSON.stringify(cfg)); }catch(e){}
+  await sbSet(MAINT_KEY,cfg);
+  loadMaintAdmin();
+}
 </script>
 </body>
 </html>

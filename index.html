@@ -373,6 +373,26 @@ input[type=range].mp-vol-slider {
   background:rgba(212,168,67,0.2);border-radius:2px;
 }
 
+
+/* ══ ТЕХОБСЛУЖИВАНИЕ ══ */
+#maintOverlay{display:none;position:fixed;inset:0;z-index:9000;background:#0b0905;overflow:hidden;font-family:'Share Tech Mono',monospace;color:#e8dcb8;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:1rem;box-sizing:border-box}
+#maintOverlay.show{display:flex}
+.mt-bg{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 35%,rgba(212,168,67,.09),transparent 60%),repeating-linear-gradient(0deg,rgba(0,0,0,.28) 0 2px,transparent 2px 4px)}
+.mt-tape{position:absolute;left:-15%;width:130%;height:46px;background:repeating-linear-gradient(-45deg,#f2c200 0 26px,#141210 26px 52px);box-shadow:0 4px 18px rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;overflow:hidden;z-index:1}
+.mt-tape.t1{top:9%;transform:rotate(-6deg)}
+.mt-tape.t2{bottom:11%;transform:rotate(4deg)}
+.mt-tape span{background:#141210;color:#f2c200;padding:.15rem .8rem;font-family:'Oswald',sans-serif;letter-spacing:.3em;font-size:.8rem;white-space:nowrap}
+.mt-sign{position:relative;z-index:2;background:#14110b;border:4px solid #f2c200;box-shadow:0 0 0 6px #141210,0 0 40px rgba(242,194,0,.25);padding:1.5rem 1.3rem;width:min(520px,90vw)}
+.mt-sign h1{font-family:'Oswald',sans-serif;font-weight:700;font-size:clamp(1.3rem,4.4vw,2.3rem);letter-spacing:.06em;color:#f2c200;text-transform:uppercase;line-height:1.15;margin:0 0 .8rem;text-shadow:0 0 14px rgba(242,194,0,.45);animation:mtFlick 4s infinite}
+.mt-sign p{margin:0;font-size:.92rem;color:#c9b98a;line-height:1.5}
+.mt-sign .mt-sub{margin-top:.9rem;font-size:.72rem;color:#7a6840;letter-spacing:.12em}
+@keyframes mtFlick{0%,92%,100%{opacity:1}94%{opacity:.35}96%{opacity:1}98%{opacity:.5}}
+.mt-game{position:relative;z-index:2;margin-top:1.2rem;width:min(340px,88vw);display:flex;flex-direction:column;align-items:center;gap:.4rem}
+#mtCanvas{width:100%;height:auto;aspect-ratio:340/480;background:rgba(0,0,0,.6);border:2px solid #f2c200;display:block;touch-action:none;cursor:pointer}
+.mt-hud{display:flex;justify-content:space-between;width:100%;font-size:.78rem;color:#c9b98a;letter-spacing:.1em}
+.mt-hud b{color:#f2c200}
+.mt-hint{font-size:.68rem;color:#7a6840;letter-spacing:.08em}
+@media(max-width:768px){.mt-tape{height:36px}.mt-tape span{font-size:.6rem}.mt-sign{padding:1.1rem .9rem}}
 </style>
 
 <script>
@@ -3125,5 +3145,171 @@ document.getElementById('admGateInp').addEventListener('keydown',e=>{
 });
 </script>
 
+
+<!-- ════════ ТЕХОБСЛУЖИВАНИЕ ════════ -->
+<div id="maintOverlay" aria-live="polite">
+  <div class="mt-bg"></div>
+  <div class="mt-tape t1"><span>ВНИМАНИЕ · ВНИМАНИЕ · ВНИМАНИЕ · ВНИМАНИЕ</span></div>
+  <div class="mt-tape t2"><span>ПРОХОД ЗАКРЫТ · ПРОХОД ЗАКРЫТ · ПРОХОД ЗАКРЫТ</span></div>
+  <div class="mt-sign">
+    <h1 id="mtTitle">ПОЖАЛУЙСТА, ЗАЙДИТЕ ПОЗЖЕ</h1>
+    <p id="mtText">Казино находится в процессе реконструкции. Приносим извинения за неудобства.</p>
+    <div class="mt-sub">LUCKY 38 · БЕЗОПАСНОСТЬ ПРЕЖДЕ ВСЕГО</div>
+  </div>
+  <div class="mt-game">
+    <div class="mt-hud"><span>Высота: <b id="mtScore">0</b></span><span>Рекорд: <b id="mtBest">0</b></span></div>
+    <canvas id="mtCanvas" width="340" height="480"></canvas>
+    <div class="mt-hint">← → или мышь / палец · пока ждёте, прыгайте по строительным лесам</div>
+  </div>
+</div>
+
+<script>
+/* ══ ТЕХОБСЛУЖИВАНИЕ: оверлей и мини-игра «Строительные леса» ══ */
+(function(){
+  const MT_W=340, MT_H=480, PW=64, PH=10, PLH=28, PLW=22, JUMP=10.5, GRAV=0.42;
+  const cv=document.getElementById('mtCanvas');
+  const ctx=cv.getContext('2d');
+  let g=null;
+
+  function bestScore(){ try{ return +localStorage.getItem('fnv_doodle_best')||0; }catch(e){ return 0; } }
+  function saveBest(v){ try{ localStorage.setItem('fnv_doodle_best', String(v)); }catch(e){} }
+  function rnd(a,b){ return a+Math.random()*(b-a); }
+
+  function makePlats(){
+    const top=()=>g.plats[g.plats.length-1].y;
+    while(top() < g.cam + MT_H + 200){
+      const sc=Math.min(g.score,600);
+      const dy=Math.min(118, rnd(50+sc*0.02, 90+sc*0.03));
+      const moving = g.score>150 && Math.random()<0.3;
+      g.plats.push({x:rnd(0,MT_W-PW), y:top()+dy, v:moving?(Math.random()<.5?-1:1)*rnd(0.8,1.6):0});
+    }
+  }
+  function newGame(){
+    g={x:MT_W/2-PLW/2, py:0, prev:0, vy:JUMP, cam:0, score:0, over:false,
+       plats:[{x:MT_W/2-PW/2, y:0, v:0}], left:false, right:false, target:null, last:0, raf:0, best:bestScore()};
+    makePlats();
+    return g;
+  }
+  function update(f){
+    if(g.left) g.x-=6*f;
+    else if(g.right) g.x+=6*f;
+    else if(g.target!==null) g.x=g.target-PLW/2;
+    if(g.x+PLW<0) g.x=MT_W; if(g.x>MT_W) g.x=-PLW;
+
+    for(const p of g.plats){
+      if(p.v){ p.x+=p.v*f; if(p.x<0||p.x>MT_W-PW){ p.v=-p.v; p.x=Math.max(0,Math.min(MT_W-PW,p.x)); } }
+    }
+    g.prev=g.py;
+    g.vy-=GRAV*f;
+    g.py+=g.vy*f;
+    if(g.vy<0){
+      for(const p of g.plats){
+        if(g.prev>=p.y && g.py<=p.y && g.x+PLW>p.x+2 && g.x<p.x+PW-2){ g.py=p.y; g.vy=JUMP; break; }
+      }
+    }
+    if(g.py > g.cam + MT_H*0.5) g.cam = g.py - MT_H*0.5;
+    g.score=Math.max(g.score, Math.floor(g.py/10));
+    makePlats();
+    g.plats=g.plats.filter(p=>p.y > g.cam-150);
+    if(g.py < g.cam-60){
+      g.over=true;
+      if(g.score>g.best){ g.best=g.score; saveBest(g.best); }
+    }
+  }
+  function draw(){
+    ctx.fillStyle='#0b0905'; ctx.fillRect(0,0,MT_W,MT_H);
+    ctx.strokeStyle='rgba(212,168,67,0.07)'; ctx.lineWidth=1;
+    const off=g.cam%40;
+    for(let y=-off; y<MT_H; y+=40){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(MT_W,y); ctx.stroke(); }
+    for(const p of g.plats){
+      const sy=MT_H-(p.y-g.cam)-PH;
+      if(sy>MT_H+20 || sy<-20) continue;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(p.x,sy,PW,PH); ctx.clip();
+      ctx.fillStyle='#f2c200'; ctx.fillRect(p.x,sy,PW,PH);
+      ctx.fillStyle='#141210';
+      for(let i=-PH; i<PW+PH; i+=12){
+        ctx.beginPath(); ctx.moveTo(p.x+i,sy+PH); ctx.lineTo(p.x+i+6,sy+PH); ctx.lineTo(p.x+i+16,sy); ctx.lineTo(p.x+i+10,sy); ctx.fill();
+      }
+      ctx.restore();
+    }
+    const fy=MT_H-(g.py-g.cam), x=g.x, top=fy-PLH;
+    ctx.fillStyle='#1f3350'; ctx.fillRect(x+4,fy-10,6,10); ctx.fillRect(x+12,fy-10,6,10);
+    ctx.fillStyle='#2a4a6b'; ctx.fillRect(x+2,top+12,18,12);
+    ctx.fillStyle='#d9b38c'; ctx.beginPath(); ctx.arc(x+11,top+8,6,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#8b1a1a'; ctx.fillRect(x+4,top+1,14,4);
+    ctx.fillStyle='#8fd14f'; ctx.fillRect(x+13,top+7,2,1);
+    if(g.over){
+      ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,0,MT_W,MT_H);
+      ctx.fillStyle='#f2c200'; ctx.font="20px 'Oswald', sans-serif"; ctx.textAlign='center';
+      ctx.fillText('ВЫ УПАЛИ', MT_W/2, MT_H/2-6);
+      ctx.fillStyle='#c9b98a'; ctx.font="13px 'Share Tech Mono', monospace";
+      ctx.fillText('нажмите, чтобы попробовать снова', MT_W/2, MT_H/2+18);
+      ctx.textAlign='left';
+    }
+    const sc=document.getElementById('mtScore'), be=document.getElementById('mtBest');
+    if(sc) sc.textContent=g.score; if(be) be.textContent=Math.max(g.best,g.score);
+  }
+  function frame(ts){
+    if(!g) return;
+    const dt=Math.min(40, ts-(g.last||ts)); g.last=ts;
+    if(!g.over) update(dt/16.67);
+    draw();
+    g.raf=requestAnimationFrame(frame);
+  }
+  function restart(){
+    if(!g) return;
+    const best=g.best; newGame(); g.best=best; g.last=0;
+  }
+  function start(){
+    if(g) return;
+    newGame(); g.raf=requestAnimationFrame(frame);
+  }
+  function stop(){
+    if(!g) return;
+    cancelAnimationFrame(g.raf); g=null;
+  }
+
+  // Управление: клавиатура, мышь и касание
+  window.addEventListener('keydown', e=>{
+    if(!g) return;
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){ g.left=true; e.preventDefault(); }
+    else if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){ g.right=true; e.preventDefault(); }
+    else if((e.key===' '||e.key==='Enter') && g.over){ restart(); e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e=>{
+    if(!g) return;
+    if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A') g.left=false;
+    if(e.key==='ArrowRight'||e.key==='d'||e.key==='D') g.right=false;
+  });
+  function setTarget(e){
+    if(!g) return;
+    const r=cv.getBoundingClientRect();
+    g.target=(e.clientX-r.left)*MT_W/r.width;
+  }
+  cv.addEventListener('pointermove', setTarget);
+  cv.addEventListener('pointerdown', e=>{ setTarget(e); if(g && g.over) restart(); });
+  cv.addEventListener('pointerleave', ()=>{ if(g) g.target=null; });
+  cv.addEventListener('pointerup', ()=>{ if(g) g.target=null; });
+
+  // Включение и выключение режима
+  window.applyMaint=function(cfg){
+    const on=!!(cfg&&cfg.on);
+    const ov=document.getElementById('maintOverlay'); if(!ov) return;
+    if(cfg){
+      const t=document.getElementById('mtTitle'), x=document.getElementById('mtText');
+      if(t && cfg.title) t.textContent=cfg.title;
+      if(x && cfg.text) x.textContent=cfg.text;
+    }
+    if(on && !ov.classList.contains('show')){ ov.classList.add('show'); document.body.style.overflow='hidden'; start(); }
+    else if(!on && ov.classList.contains('show')){ ov.classList.remove('show'); document.body.style.overflow=''; stop(); }
+  };
+  window.refreshMaint=async function(){
+    try{ const c=await sbGet('fnv_maint'); if(c!==null && c!==undefined) applyMaint(c); }catch(e){}
+  };
+  refreshMaint();
+  setInterval(refreshMaint, 5000);
+})();
+</script>
 </body>
 </html>
